@@ -1,0 +1,34 @@
+# Normal rules
+.*
+*.a
+*.bin
+*.bz2
+*.c.*
+*.d
+*.dll
+*.dwo
+*.elf
+*.exe
+*.gz
+*.i
+*.ll
+*.lst
+*.lzma
+*.lzo
+*.o
+*.o.*
+*.patch
+*.so
+*.tar
+*.xz
+*.zstd
+
+# Don't ignore these
+!.gitattributes
+!.gitignore
+
+# ctags/cscope files
+cscope.*
+ncscope.*
+tags
+TAGS
