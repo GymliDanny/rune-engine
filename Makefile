@@ -2,41 +2,45 @@ CC?=gcc
 INCLUDE?=-Iinclude
 CFLAGS?=-O0
 LDFLAGS?=
-LIBS?=-lglfw -lvulkan
+RENDER?=render-vulkan
+PLATFORM?=linux
 
 # -- Do not edit below this line --
 
 VERSION:="$(shell git describe --abbrev=4 --dirty --always --tags)"
+CC:=$(CC)
 INCLUDE:=$(INCLUDE)
-CFLAGS:=$(CFLAGS) -Wall -Wextra -DVERSION=\"$(VERSION)\" -ggdb -fstack-protector-all -fPIC
+CFLAGS:=$(CFLAGS) $(INCLUDE) -Wall -Wextra -DVERSION=\"$(VERSION)\" -ggdb -fstack-protector-all -fPIC
 LDFLAGS:=$(LDFLAGS) -shared
-LIBS:=$(LIBS)
 
-ENGINE=librune.so
-ENGINE_OBJS=src/init.o \
-	    src/graphics.o \
-	    src/callbacks.o \
+COREDIR:=core
+RENDERDIR:=$(RENDER)
+ENGINE:=librune.so
 
-LINK_LIST=$(LDFLAGS) \
-	  $(ENGINE_OBJS) \
-	  $(LIBS) \
+include $(COREDIR)/make.config $(RENDERDIR)/make.config
+
+LDFLAGS:=$(LDFLAGS) $(RENDER_LDFLAGS) $(CORE_LDFLAGS)
+LIBS:=$(LIBS) $(RENDER_LIBS) $(CORE_LIBS)
+OBJS:=$(RENDER_OBJS) $(CORE_OBJS)
 
 .PHONY: all clean install install-headers
 .SUFFIXES: .o .c
 
 all: $(ENGINE)
 
-$(ENGINE): $(ENGINE_OBJS)
-	@$(CC) -o $@ $(LINK_LIST)
+$(ENGINE): $(OBJS)
+	@$(CC) -o $@ $(LIBS) $(LDFLAGS) $?
 	@echo [LD] $@
+	@objcopy --only-keep-debug $(ENGINE) $(ENGINE:.so=.sym)
+	@strip -s $(ENGINE)
+	@objcopy --add-gnu-debuglink=$(ENGINE:.so=.sym) $(ENGINE)
+	@echo [strip] $(ENGINE)
 
 .c.o:
 	@$(CC) -MD -c $< -o $@ $(CFLAGS) $(INCLUDE)
 	@echo [CC] $@
 
 clean:
-	$(RM) $(ENGINE)
-	$(RM) $(ENGINE_OBJS) *.o */*.o */*/*.o
-	$(RM) $(ENGINE_OBJS:.o=.d) *.d */*.d */*/*.d
+	$(RM) $(OBJS) $(OBJS:o=.d)
 
--include $(ENGINE_OBJS:.o=.d)
+-include $(OBJS:.o=.d)

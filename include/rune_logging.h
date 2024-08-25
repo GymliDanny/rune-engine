@@ -11,6 +11,6 @@ enum log_level {
         LOG_DEBUG
 };
 
-void log_output(int level, const char *fmt, ...);
+RAPI void log_output(int level, const char *fmt, ...);
 
 #endif
