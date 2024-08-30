@@ -1,4 +1,4 @@
-#include <rune_logging.h>
+#include <rune/logging.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
