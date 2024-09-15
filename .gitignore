@@ -35,5 +35,15 @@ ncscope.*
 tags
 TAGS
 
-# Output directory
-bin/
+# CMake leavings
+CMakeFiles/
+CMakeScripts/
+_deps/
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeUserPresets.json
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+install_manifest.txt
+Makefile
