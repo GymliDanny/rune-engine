@@ -19,36 +19,11 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef RUNE_UTIL_H
-#define RUNE_UTIL_H
+#ifndef RUNE_ABORT_H
+#define RUNE_ABORT_H
 
-#include <assert.h>
-#include <stdint.h>
+#include <rune/util/types.h>
 
-#if defined(__clang__) || defined(__gcc__)
-        #define STATIC_ASSERT _Static_assert
-#else
-        #define STATIC_ASSERT static_assert
-#endif
-
-
-#ifdef REXPORT
-        #ifdef _MSC_VER
-                #define RAPI __declspec(dllexport)
-        #else
-                #define RAPI __attribute__((visibility("default")))
-        #endif
-#else
-        #ifdef _MSC_VER
-                #define RAPI __declspec(dllexport)
-        #else
-                #define RAPI
-        #endif
-#endif
-
-static inline uint32_t clamp(uint32_t value, float min, float max) {
-        const uint32_t ret = value < min ? min : value;
-        return ret > max ? max : ret;
-}
+RAPI void rune_abort(void);
 
 #endif

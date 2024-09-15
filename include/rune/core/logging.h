@@ -19,35 +19,19 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef RUNE_LIST_H
-#define RUNE_LIST_H
+#ifndef RUNE_CORE_LOGGING_H
+#define RUNE_CORE_LOGGING_H
 
-#include <stddef.h>
+#include <rune/util/types.h>
 
-struct list_head {
-        struct list_head *next;
-        struct list_head *prev;
+enum log_level {
+        LOG_FATAL,
+        LOG_ERROR,
+        LOG_WARN,
+        LOG_INFO,
+        LOG_DEBUG
 };
 
-static inline void list_add(struct list_head *new, struct list_head *head) {
-        struct list_head *temp = head;
-        while (temp->next != NULL)
-                temp = temp->next;
-
-        temp->next = new;
-        new->prev = temp;
-        new->next = NULL;
-}
-
-static inline void list_del(struct list_head *item) {
-        struct list_head *next = item->next;
-        struct list_head *prev = item->prev;
-        if (next != NULL)
-                next->prev = prev;
-        if (prev != NULL)
-                prev->next = next;
-        item->next = NULL;
-        item->prev = NULL;
-}
+RAPI void log_output(int level, const char *fmt, ...);
 
 #endif
