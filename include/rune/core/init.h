@@ -19,20 +19,12 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef RUNE_GRAPHICS_H
-#define RUNE_GRAPHICS_H
+#ifndef RUNE_INIT_H
+#define RUNE_INIT_H
 
-#include <rune/types.h>
-#include <GLFW/glfw3.h>
+#include <rune/util/types.h>
 
-struct rune_window {
-        uint32_t winw;
-        uint32_t winh;
-        const char *wintitle;
-        GLFWwindow *window;
-};
-
-RAPI int rune_gfx_init(struct rune_window *window);
-RAPI void rune_gfx_quit(struct rune_window *window);
+RAPI struct rune_window* rune_init(uint32_t width, uint32_t height, const char *title);
+RAPI void rune_exit(void);
 
 #endif
