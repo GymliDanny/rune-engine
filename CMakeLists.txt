@@ -15,6 +15,12 @@ list(APPEND SOURCE_FILES
         core/network.c
 )
 
+list(APPEND SOURCE_FILES
+        ui/window.c
+        ui/input.c
+        ui/renderer.c
+)
+
 set(HEADER_DIR include)
 
 add_compile_definitions(VERSION="${PROJECT_VERSION}")
