@@ -26,6 +26,7 @@ set(HEADER_DIR include)
 add_compile_definitions(VERSION="${PROJECT_VERSION}")
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
+set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
