@@ -1,10 +1,19 @@
 #include <rune/core/abort.h>
 #include <rune/core/init.h>
 #include <rune/core/logging.h>
-#include <execinfo.h>
 #include <stdlib.h>
 
 #define MAX_TRACE_ITEMS 30
+
+#ifdef _WIN32
+
+void _stack_trace(void) {
+        log_output(LOG_ERROR, "Stack tracing is not supported on Windows");
+}
+
+#else
+
+#include <execinfo.h>
 
 void _stack_trace(void) {
         void* buffer[MAX_TRACE_ITEMS];
@@ -16,6 +25,8 @@ void _stack_trace(void) {
 
         free(symbuf);
 }
+
+#endif
 
 void rune_abort(void) {
         log_output(LOG_INFO, "Abort called, printing stack trace");
