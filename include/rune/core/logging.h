@@ -35,5 +35,7 @@ enum log_level {
 RAPI void log_output(int level, const char *fmt, ...);
 RAPI void enable_log_debug(void);
 RAPI void disable_log_debug(void);
+RAPI void enable_log_color(void);
+RAPI void disable_log_color(void);
 
 #endif
