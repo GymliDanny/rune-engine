@@ -1,6 +1,7 @@
 #include <rune/core/alloc.h>
 #include <rune/core/logging.h>
 #include <stdlib.h>
+#include <string.h>
 
 // TODO: implement block coalescing so we can reuse freed blocks
 
@@ -69,12 +70,13 @@ void* rune_calloc(size_t nmemb, size_t sz) {
 
 void* rune_realloc(void *ptr, size_t sz) {
         if (ptr == NULL || sz == 0)
-                return NULL;
+                return rune_alloc(sz);
 
         struct mem_block *block = _find_block(ptr);
-        if (block == NULL)
-                return rune_alloc(sz);
-        return block->ptr;
+        void *new_ptr = rune_alloc(sz);
+        memcpy(new_ptr, ptr, block->sz);
+        block->free = 1;
+        return new_ptr;
 }
 
 void rune_free(void *ptr) {
