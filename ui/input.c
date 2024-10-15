@@ -8,6 +8,7 @@ static int keyboard_mode;
 static void (*key_hooks[256])(void);
 
 void _key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+        scancode -= 8;
         if (action == GLFW_PRESS && key_hooks[scancode] != NULL)
                 (*key_hooks[scancode])();
 }
@@ -31,8 +32,8 @@ int get_keyboard_mode(void) {
         return keyboard_mode;
 }
 
-void register_key_hook(int key, void (*func)(void)) {
-        key_hooks[key] = func;
+void register_key_hook(uint8_t scancode, void (*func)(void)) {
+        key_hooks[scancode] = func;
 }
 
 void rune_input_tick(void) {

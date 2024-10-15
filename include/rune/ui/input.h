@@ -29,12 +29,11 @@
 #define KB_MODE_TEXT    1
 
 RAPI int rune_input_init(struct rune_window *window);
-RAPI void rune_input_quit(void);
 
 RAPI void set_keyboard_mode(int mode);
 RAPI int get_keyboard_mode(void);
 
-RAPI void register_key_hook(int key, void (*func)(void));
+RAPI void register_key_hook(uint8_t scancode, void (*func)(void));
 RAPI void rune_input_tick(void);
 
 #endif
