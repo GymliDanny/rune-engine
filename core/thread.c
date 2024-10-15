@@ -16,7 +16,7 @@ struct start_args {
         void *thread_args;
 };
 
-struct thread* _find_thread_by_handle(void *handle) {
+static struct thread* _find_thread_by_handle(void *handle) {
         if (threads == NULL)
                 return NULL;
 
@@ -31,7 +31,7 @@ struct thread* _find_thread_by_handle(void *handle) {
         return NULL;
 }
 
-struct thread* _find_thread_by_id(int ID) {
+static struct thread* _find_thread_by_id(int ID) {
         if (threads == NULL)
                 return NULL;
 
@@ -46,7 +46,7 @@ struct thread* _find_thread_by_id(int ID) {
         return NULL;
 }
 
-struct mutex* _find_mutex_by_id(int ID) {
+static struct mutex* _find_mutex_by_id(int ID) {
         if (mutexes == NULL)
                 return NULL;
 
@@ -62,14 +62,14 @@ struct mutex* _find_mutex_by_id(int ID) {
 }
 
 
-void _cleanup_pthread(void *arg) {
+static void _cleanup_pthread(void *arg) {
         struct thread *thread = (struct thread*)arg;
         list_del(&thread->list);
         rune_free(thread->thread_handle);
         rune_free(thread);
 }
 
-void* _startup_pthread(void *arg) {
+static void* _startup_pthread(void *arg) {
         struct start_args *start_args = (struct start_args*)arg;
 
         void* (*thread_fn)(void *data) = start_args->thread_fn;
