@@ -14,7 +14,9 @@ list(APPEND SOURCE_FILES
         core/callbacks.c
         core/init.c
         core/logging.c
+        core/mod.c
         core/network.c
+        core/thread.c
 )
 
 list(APPEND SOURCE_FILES
