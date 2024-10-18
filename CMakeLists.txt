@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
+project(rune-engine VERSION 0.61.0 DESCRIPTION "High performance game engine designed for Quake-style shooters")
 
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
-
-project(rune-engine VERSION 0.61.0 DESCRIPTION "High performance game engine designed for Quake-style shooters")
 
 list(APPEND SOURCE_FILES
         core/abort.c
@@ -35,6 +35,8 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)
 target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
+
+add_subdirectory("doc")
 
 include(GNUInstallDirs)
 install(TARGETS ${PROJECT_NAME}
