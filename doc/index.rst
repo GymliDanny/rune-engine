@@ -25,12 +25,12 @@ trying to get the engine to work for their own applications or libraries.
 
    Introduction <introduction.rst>
    List of features <feature-list.rst>
+   License requirements <license-requirements.rst>
    Core API <core/index.rst>
    Network API <network/index.rst>
    Rendering API <render/index.rst>
    UI API <ui/index.rst>
    Sound API <sound/index.rst>
-   Reporting issues <reporting-issues.rst>
 
 Working with upstream
 ---------------------
