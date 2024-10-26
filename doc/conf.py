@@ -9,7 +9,7 @@
 project = 'Rune Game Engine'
 copyright = '2024, Danny Holman'
 author = 'Danny Holman'
-release = 'v0.61.0'
+release = 'v0.62.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

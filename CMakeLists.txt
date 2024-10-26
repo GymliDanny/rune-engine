@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(rune-engine VERSION 0.61.0 DESCRIPTION "High performance game engine designed for Quake-style shooters")
+project(rune-engine VERSION 0.62.0 DESCRIPTION "High performance game engine designed for Quake-style shooters")
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMake" ${CMAKE_MODULE_PATH})
 set(CMAKE_C_STANDARD 23)
