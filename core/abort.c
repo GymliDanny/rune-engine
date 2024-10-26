@@ -32,4 +32,5 @@ void rune_abort(void) {
         log_output(LOG_INFO, "Abort called, printing stack trace");
         _stack_trace();
         rune_exit();
+        exit(-1);
 }
