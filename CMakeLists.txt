@@ -20,19 +20,61 @@ list(APPEND SOURCE_FILES
 )
 
 list(APPEND SOURCE_FILES
+        render/directx/renderer.c
+        render/vulkan/context.c
+        render/vulkan/device.c
+        render/vulkan/fence.c
+        render/vulkan/framebuffer.c
+        render/vulkan/image.c
+        render/vulkan/renderer.c
+        render/vulkan/renderpass.c
+        render/vulkan/swapchain.c
         ui/window.c
         ui/input.c
         ui/renderer.c
 )
 
+find_package(Vulkan REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(OpenAL REQUIRED)
+find_package(cglm REQUIRED)
+find_package(Threads REQUIRED)
+
 set(HEADER_DIR include)
+
+list(APPEND INCLUDE_DIRS
+        ${HEADER_DIR}
+        ${Vulkan_INCLUDE_DIRS}
+        ${GLFW_INCLUDE_DIR}
+        ${OPENAL_INCLUDE_DIR}
+)
+
+list(APPEND LINK_LIBS
+        ${Vulkan_LIBRARIES}
+        ${GLFW_LIBRARIES}
+        ${OPENAL_LIBRARY}
+        ${CMAKE_THREAD_LIBS_INIT}
+)
+
+if (WIN32)
+        find_package(dlfcn-win32 REQUIRED)
+        set(GLFW_LIBRARIES glfw3dll)
+        set(DX12_LIBRARIES d3d12.lib dxgi.lib dxguid.lib)
+        set(DL_LIBRARIES dlfcn-win32::dl)
+        list(APPEND LINK_LIBS ${DX12_LIBRARIES} ${DL_LIBRARIES})
+else()
+        set(GLFW_LIBRARIES glfw)
+endif()
+
+list(APPEND LINK_LIBS ${GLFW_LIBRARIES})
 
 add_compile_definitions(VERSION="${PROJECT_VERSION}")
 add_compile_definitions(RAPI_EXPORT)
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)
-target_include_directories(${PROJECT_NAME} PUBLIC ${HEADER_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} ${LINK_LIBS})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 
