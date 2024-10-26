@@ -17,7 +17,7 @@
 #define LSTR_DEBUG      "[DEBUG]"
 
 static int debug_enabled = 0;
-static int color_enabled = 1;
+static int color_enabled = 0;
 
 void log_output(int level, const char *fmt, ...) {
         char out[4096];
@@ -72,9 +72,23 @@ void disable_log_debug(void) {
         debug_enabled = 0;
 }
 
+#ifdef _WIN32
+
+#include <windows.h>
+
+void enable_log_color(void) {
+        HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleMode(handle, ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+        color_enabled = 1;
+}
+
+#else
+
 void enable_log_color(void) {
         color_enabled = 1;
 }
+
+#endif
 
 void disable_log_color(void) {
         color_enabled = 0;
