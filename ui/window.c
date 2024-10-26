@@ -6,7 +6,7 @@
 #include <rune/util/types.h>
 #include <string.h>
 
-struct rune_window* rune_create_window(uint32_t width, uint32_t height, const char *title) {
+struct rune_window* rune_init_window(uint32_t width, uint32_t height, const char *title) {
         glfwInit();
         glfwSetErrorCallback(error_callback);
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

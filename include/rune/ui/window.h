@@ -32,7 +32,7 @@ struct rune_window {
         GLFWwindow *window;
 };
 
-RAPI struct rune_window* rune_create_window(uint32_t width, uint32_t height, const char *title);
+RAPI struct rune_window* rune_init_window(uint32_t width, uint32_t height, const char *title);
 RAPI void rune_destroy_window(struct rune_window *window);
 
 #endif
