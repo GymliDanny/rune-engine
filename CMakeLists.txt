@@ -31,7 +31,6 @@ list(APPEND SOURCE_FILES
         render/vulkan/swapchain.c
         ui/window.c
         ui/input.c
-        ui/renderer.c
 )
 
 find_package(Vulkan REQUIRED)

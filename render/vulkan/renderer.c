@@ -1,6 +1,6 @@
 #include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
-#include <rune/ui/renderer.h>
+#include <rune/render/renderer.h>
 #include <rune/core/logging.h>
 #include <rune/core/alloc.h>
 #include <rune/core/abort.h>

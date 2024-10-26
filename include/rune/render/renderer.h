@@ -19,15 +19,15 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef RUNE_UI_RENDERER_H
-#define RUNE_UI_RENDERER_H
+#ifndef RUNE_RENDER_RENDERER_H
+#define RUNE_RENDER_RENDERER_H
 
 #include <rune/util/types.h>
 #include <rune/ui/window.h>
 
 struct rune_renderer {
         int (*init)(struct rune_window *window);
-        void (*close)(void);
+        void (*close)(struct rune_renderer *renderer);
         void (*draw)(void);
         void (*clear)(void);
 };
