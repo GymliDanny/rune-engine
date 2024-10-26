@@ -81,6 +81,7 @@ struct vkswapchain* create_swapchain(struct vksurface *surface, struct vkdev *de
                                                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                                      VK_IMAGE_ASPECT_DEPTH_BIT,
                                                      1);
+        swapchain->frame = 0;
         log_output(LOG_DEBUG, "Initialized swapchain");
         return swapchain;
 }

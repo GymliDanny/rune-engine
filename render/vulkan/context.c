@@ -123,7 +123,6 @@ struct vkcontext* create_vkcontext(struct vklayer_container *vklayers, struct ex
                 log_output(LOG_INFO, "Validation layers disabled");
         }
 
-        ret->frame = 0;
         return ret;
 }
 
