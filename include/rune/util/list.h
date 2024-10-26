@@ -24,12 +24,20 @@
 
 #include <stddef.h>
 
-RAPI struct list_head {
-        struct list_head *next;
-        struct list_head *prev;
+/**
+ * Linux-kernel combatible linked list implementation
+ */
+struct list_head {
+        struct list_head *next; ///< Next list element
+        struct list_head *prev; ///< Previous list element
 };
 
-RAPI static inline void list_add(struct list_head *new, struct list_head *head) {
+/**
+ * \brief Add element to the end of a list
+ * \param[in] new Pointer to struct list_head, part of another struct
+ * \param[in] head Start point of the list to be added to
+ */
+static inline void list_add(struct list_head *new, struct list_head *head) {
         struct list_head *temp = head;
         while (temp->next != NULL)
                 temp = temp->next;
@@ -39,7 +47,11 @@ RAPI static inline void list_add(struct list_head *new, struct list_head *head) 
         new->next = NULL;
 }
 
-RAPI static inline void list_del(struct list_head *item) {
+/**
+ * \brief Remove element from a list
+ * \param[in] item Pointer to struct list_head, part of another struct
+ */
+static inline void list_del(struct list_head *item) {
         struct list_head *next = item->next;
         struct list_head *prev = item->prev;
         if (next != NULL)

@@ -24,18 +24,41 @@
 
 #include <rune/util/types.h>
 
+/// Indicates the error level of the message
 enum log_level {
-        LOG_FATAL,
-        LOG_ERROR,
-        LOG_WARN,
-        LOG_INFO,
-        LOG_DEBUG
+        LOG_FATAL,      ///< A major error has occured and execution cannot continue
+        LOG_ERROR,      ///< A major error has occured
+        LOG_WARN,       ///< A minor error has occured
+        LOG_INFO,       ///< A simple event has occured
+        LOG_DEBUG       ///< A confirmation or other debugging message, only printed when enabled
 };
 
+/**
+ * \brief Print message to the engine log
+ * \param[in] level Error level, a value in log_level
+ * \param[in] fmt Format string
+ * \param[in] ... Format specifiers (%d, %s, etc.)
+ */
 RAPI void log_output(int level, const char *fmt, ...);
+
+/**
+ * \brief Enable debug logging
+ */
 RAPI void enable_log_debug(void);
+
+/**
+ * \brief Disable debug logging (default)
+ */
 RAPI void disable_log_debug(void);
+
+/**
+ * \brief Enable color output (default)
+ */
 RAPI void enable_log_color(void);
+
+/**
+ * \brief Disable color output
+ */
 RAPI void disable_log_color(void);
 
 #endif

@@ -19,12 +19,28 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef RUNE_INIT_H
-#define RUNE_INIT_H
+#ifndef RUNE_CORE_INIT_H
+#define RUNE_CORE_INIT_H
 
 #include <rune/util/types.h>
 
-RAPI struct rune_window* rune_init(uint32_t width, uint32_t height, const char *title);
+/**
+ * \brief Main point of initialization, must be called before any other engine
+ * function
+ * \param[in] argc The same argc defined in the program's main function
+ * \param[in] argv The same argv defined in the program's main function
+ * \return 0, or a negative number indicating the error
+ */
+RAPI int rune_init(int argc, char* argv[]);
+
+/**
+ * \brief Shuts down the engine and cleans up any remaining memory
+ */
 RAPI void rune_exit(void);
+
+/**
+ * \brief Hot-reloads the entire engine library from disk
+ */
+RAPI int rune_hot_reload(void);
 
 #endif

@@ -24,6 +24,10 @@
 
 #include <rune/util/types.h>
 
+/**
+ * \brief Called during a fatal error, force-quits the engine,
+ * calls a stack trace on POSIX-compliant platforms
+ */
 RAPI void rune_abort(void);
 
 #endif

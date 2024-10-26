@@ -47,19 +47,44 @@
 
 #endif
 
+/// Function pointer, used by the mod struct
 typedef void (*mod_func)(void);
 
+/**
+ * Class-like definition for in-game mod
+ */
 struct mod {
-        const char *name;
-        mod_func init_func;
-        mod_func exit_func;
-        mod_func update_func;
-        struct list_head list;
+        const char *name;       ///< Name of the mod
+        mod_func init_func;     ///< Mod initialization function, called by rune_init_mods
+        mod_func exit_func;     ///< Mod exit function, called by rune_close_mods
+        mod_func update_func;   ///< Mod update function, called at every frame
+        struct list_head list;  ///< Linked list of all mod structs, used internally
 };
 
+/**
+ * \brief Load all the mods from the mod folder, mods must be either DLLs on Windows,
+ * or shared objects on Linux.
+ */
 RAPI void rune_load_mods(void);
+
+/**
+ * \brief Iterate over the list of mods and call each mod's init_func
+ */
 RAPI void rune_init_mods(void);
+
+/**
+ * \brief Iterate over the list of mods, call each mod's exit_func and release memory
+ */
 RAPI void rune_close_mods(void);
+
+/**
+ * \brief Mod registration function, called by a mod by way of the REGISTER_MOD
+ * macro
+ * \param[in] name Name of the mod (can include version information)
+ * \param[in] init_func Mod init function, called by rune_init_mods
+ * \param[in] exit_func Mod exit function, called by rune_exit_mods
+ * \param[in] update_func Mod update function, called during each frame
+ */
 RAPI void rune_register_mod(const char *name, mod_func init_func, mod_func exit_func, mod_func update_func);
 
 #endif

@@ -23,32 +23,49 @@
 #define RUNE_UTIL_UTIL_H
 
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 
+/// Use the compiler-specific version of static_assert
 #if defined(__clang__) || defined(__gcc__)
         #define STATIC_ASSERT _Static_assert
 #else
         #define STATIC_ASSERT static_assert
 #endif
 
+/// GLFW requires this to enable dynamic linking on Windows
+#if _WIN32
+#define GLFW_DLL 1
+#endif
 
-#ifdef REXPORT
-        #ifdef _MSC_VER
+/// Make API functions visible outside of the library
+#ifdef RAPI_EXPORT
+        #ifdef _WIN32
                 #define RAPI __declspec(dllexport)
         #else
                 #define RAPI __attribute__((visibility("default")))
         #endif
 #else
-        #ifdef _MSC_VER
-                #define RAPI __declspec(dllexport)
+        #ifdef _WIN32
+                #define RAPI __declspec(dllimport)
         #else
                 #define RAPI
         #endif
 #endif
 
-static inline uint32_t clamp(uint32_t value, float min, float max) {
-        const uint32_t ret = value < min ? min : value;
-        return ret > max ? max : ret;
+/**
+ * \brief Clamps a value between two floating point values
+ * \param[in] x Value to be clamped
+ * \param[in] min Floor value
+ * \param[in] max Ceiling value
+ * \return One of min, max or x
+ */
+static inline float clamp(float x, float min, float max) {
+        if (x < min)
+                return min;
+        if (x > max)
+                return max;
+        return x;
 }
 
 #endif
