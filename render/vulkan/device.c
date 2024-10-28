@@ -143,9 +143,25 @@ struct vkdev* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
         vkassert(vkCreateDevice(dev->pdev, &dcinfo, NULL, &dev->ldev));
 
         vkGetDeviceQueue(dev->ldev, dev->gfx_index, 0, &dev->gfx_queue);
+        if (dev->gfx_queue == NULL) {
+                log_output(LOG_FATAL, "Error creating Vulkan graphics queue");
+                rune_abort();
+        }
         vkGetDeviceQueue(dev->ldev, dev->tsfr_index, 0, &dev->tsfr_queue);
+        if (dev->tsfr_queue == NULL) {
+                log_output(LOG_FATAL, "Error creating Vulkan transfer queue");
+                rune_abort();
+        }
         vkGetDeviceQueue(dev->ldev, dev->pres_index, 0, &dev->pres_queue);
+        if (dev->pres_queue == NULL) {
+                log_output(LOG_FATAL, "Error creating Vulkan present queue");
+                rune_abort();
+        }
         vkGetDeviceQueue(dev->ldev, dev->comp_index, 0, &dev->comp_queue);
+        if (dev->comp_queue == NULL) {
+                log_output(LOG_FATAL, "Error creating Vulkan compute queue");
+                rune_abort();
+        }
 
         VkCommandPoolCreateInfo pcinfo;
         pcinfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
