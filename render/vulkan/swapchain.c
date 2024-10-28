@@ -47,12 +47,12 @@ struct vkswapchain* create_swapchain(struct vksurface *surface, struct vkdev *de
                 cinfo.queueFamilyIndexCount = 0;
                 cinfo.pQueueFamilyIndices = 0;
         }
-        vkassert(vkCreateSwapchainKHR(dev->ldev, &cinfo, NULL, &swapchain->handle), "Failed to create swapchain");
-        vkassert(vkGetSwapchainImagesKHR(dev->ldev, swapchain->handle, &swapchain->img_count, NULL), "Failed to aquire swapchain image count");
+        vkassert(vkCreateSwapchainKHR(dev->ldev, &cinfo, NULL, &swapchain->handle));
+        vkassert(vkGetSwapchainImagesKHR(dev->ldev, swapchain->handle, &swapchain->img_count, NULL));
 
         swapchain->images = rune_alloc(sizeof(VkImage) * swapchain->img_count);
         swapchain->views = rune_alloc(sizeof(VkImageView) * swapchain->img_count);
-        vkassert(vkGetSwapchainImagesKHR(dev->ldev, swapchain->handle, &swapchain->img_count, swapchain->images), "Failed to aquire swapchain images");
+        vkassert(vkGetSwapchainImagesKHR(dev->ldev, swapchain->handle, &swapchain->img_count, swapchain->images));
 
         VkImageViewCreateInfo vcinfo;
         for (uint32_t i = 0; i < swapchain->img_count; i++) {
@@ -65,7 +65,7 @@ struct vkswapchain* create_swapchain(struct vksurface *surface, struct vkdev *de
                 vcinfo.subresourceRange.levelCount = 1;
                 vcinfo.subresourceRange.baseArrayLayer = 0;
                 vcinfo.subresourceRange.layerCount = 1;
-                vkassert(vkCreateImageView(dev->ldev, &vcinfo, NULL, &swapchain->views[i]), "Failed to create image view");
+                vkassert(vkCreateImageView(dev->ldev, &vcinfo, NULL, &swapchain->views[i]));
         }
 
         if (get_depth_format(dev) == 0) {
@@ -96,18 +96,21 @@ void destroy_swapchain(struct vkswapchain *swapchain, struct vkdev *dev) {
 }
 
 void vkswapchain_present(struct vkswapchain *swapchain, struct vkdev *dev) {
-        VkPresentInfoKHR pinfo = {VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+        VkPresentInfoKHR pinfo;
+        pinfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        pinfo.pNext = NULL;
         pinfo.waitSemaphoreCount = 1;
         pinfo.pWaitSemaphores = &swapchain->render_complete;
         pinfo.swapchainCount = 1;
         pinfo.pSwapchains = &swapchain->handle;
         pinfo.pImageIndices = &dev->pres_index;
+        pinfo.pResults = NULL;
 
         VkResult res = vkQueuePresentKHR(dev->pres_queue, &pinfo);
         if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
                 STUBBED("Recreate swapchain");
         else if (res != VK_SUCCESS)
-                log_output(LOG_FATAL, "Cannot present swapchain image");
+                log_output(LOG_ERROR, "Vulkan error: %s", get_vkerr_str(res));
 
         swapchain->frame = (swapchain->frame + 1) % swapchain->max_frames;
 }

@@ -1,39 +1,9 @@
 #include "context.h"
+#include "vkassert.h"
 #include <rune/core/logging.h>
 #include <rune/core/alloc.h>
 #include <stdlib.h>
 #include <string.h>
-
-char* _get_vkerr_str(VkResult res) {
-        char *ret;
-        switch (res) {
-                case VK_SUCCESS:
-                        ret = "SUCCESS";
-                        break;
-                case VK_ERROR_OUT_OF_HOST_MEMORY:
-                        ret = "OUT OF HOST MEMORY";
-                        break;
-                case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-                        ret = "OUT OF DEVICE MEMORY";
-                        break;
-                case VK_ERROR_INITIALIZATION_FAILED:
-                        ret = "INITIALIZATION FAILED";
-                        break;
-                case VK_ERROR_LAYER_NOT_PRESENT:
-                        ret = "VALIDATION LAYER NOT PRESENT";
-                        break;
-                case VK_ERROR_EXTENSION_NOT_PRESENT:
-                        ret = "EXTENSION NOT PRESENT";
-                        break;
-                case VK_ERROR_INCOMPATIBLE_DRIVER:
-                        ret = "INCOMPATIBLE DRIVER";
-                        break;
-                default:
-                        ret = "UNKNOWN RESULT";
-                        break;
-        }
-        return strdup(ret);
-}
 
 VKAPI_ATTR VkBool32 VKAPI_CALL _vulkan_db_callback(
                 VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
@@ -79,7 +49,7 @@ int _init_vkdebugger(struct vkcontext *context) {
         VkResult res;
         res = func(context->instance, &dbinfo, NULL, &context->db_messenger);
         if (res != VK_SUCCESS) {
-                char *err_str = _get_vkerr_str(res);
+                char *err_str = get_vkerr_str(res);
                 log_output(LOG_ERROR, "Cannot create a Vulkan debug session: %s", err_str);
                 free(err_str);
                 return -1;
@@ -107,7 +77,7 @@ struct vkcontext* create_vkcontext(struct vklayer_container *vklayers, struct ex
         VkResult res;
         res = vkCreateInstance(&cinfo, NULL, &ret->instance);
         if (res != VK_SUCCESS) {
-                char *err_str = _get_vkerr_str(res);
+                char *err_str = get_vkerr_str(res);
                 log_output(LOG_FATAL, "Cannot create a Vulkan instance: %s", err_str);
                 free(err_str);
                 rune_free(ret);

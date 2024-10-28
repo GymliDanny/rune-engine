@@ -21,7 +21,7 @@ struct vkframebuffer* create_vkframebuffer(struct vkdev *dev, struct vkrendpass 
         fbinfo.width = width;
         fbinfo.height = height;
         fbinfo.layers = 1;
-        vkassert(vkCreateFramebuffer(dev->ldev, &fbinfo, NULL, &ret->handle), "Failed to create Vulkan framebuffer");
+        vkassert(vkCreateFramebuffer(dev->ldev, &fbinfo, NULL, &ret->handle));
 
         return ret;
 }

@@ -13,7 +13,7 @@ struct vkfence* create_vkfence(struct vkdev *dev, uint8_t signal) {
                 fcinfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         else
                 fcinfo.flags = 0;
-        vkassert(vkCreateFence(dev->ldev, &fcinfo, NULL, &ret->handle), "Failed to create fence");
+        vkassert(vkCreateFence(dev->ldev, &fcinfo, NULL, &ret->handle));
         return ret;
 }
 
@@ -58,6 +58,6 @@ void fence_unlock(struct vkfence *fence, struct vkdev *dev) {
         if (fence->signal == 0)
                 return;
 
-        vkassert(vkResetFences(dev->ldev, 1, &fence->handle), "Cannot reset Vulkan fence");
+        vkassert(vkResetFences(dev->ldev, 1, &fence->handle));
         fence->signal = 1;
 }

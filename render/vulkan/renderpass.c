@@ -14,7 +14,7 @@ struct vkcmdbuffer* create_vkcmdbuffer(struct vkdev *dev, int primary) {
         else
                 ainfo.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
         ainfo.commandBufferCount = 1;
-        vkassert(vkAllocateCommandBuffers(dev->ldev, &ainfo, &ret->handle), "Failed to initialize command buffer");
+        vkassert(vkAllocateCommandBuffers(dev->ldev, &ainfo, &ret->handle));
 
         ret->state = CMDBUF_READY;
         return ret;
@@ -36,12 +36,12 @@ void cmdbuf_begin(struct vkcmdbuffer *cmdbuffer, int single, int rpass_cont, int
                 binfo.flags |= VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
         if (sim_use)
                 binfo.flags |= VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-        vkassert(vkBeginCommandBuffer(cmdbuffer->handle, &binfo), "Cannot record commands into command buffer");
+        vkassert(vkBeginCommandBuffer(cmdbuffer->handle, &binfo));
         cmdbuffer->state = CMDBUF_RECORD;
 }
 
 void cmdbuf_end(struct vkcmdbuffer *cmdbuffer) {
-        vkassert(vkEndCommandBuffer(cmdbuffer->handle), "Cannot end command buffer recording");
+        vkassert(vkEndCommandBuffer(cmdbuffer->handle));
         cmdbuffer->state = CMDBUF_ENDREC;
 }
 
@@ -63,9 +63,9 @@ void cmdbuf_end_single_use(struct vkcmdbuffer *cmdbuffer, struct vkdev *dev, VkQ
         sinfo.pCommandBuffers = &cmdbuffer->handle;
         sinfo.signalSemaphoreCount = 0;
         sinfo.pSignalSemaphores = NULL;
-        vkassert(vkQueueSubmit(queue, 1, &sinfo, 0), "Cannot submit single use command buffer");
+        vkassert(vkQueueSubmit(queue, 1, &sinfo, 0));
 
-        vkassert(vkQueueWaitIdle(queue), "Error while waiting for Vulkan queue");
+        vkassert(vkQueueWaitIdle(queue));
         destroy_vkcmdbuffer(cmdbuffer, dev);
 }
 
@@ -130,7 +130,7 @@ struct vkrendpass* create_vkrendpass(struct vkdev *dev, struct vkswapchain *swap
         rcinfo.pSubpasses = &subpass;
         rcinfo.dependencyCount = 1;
         rcinfo.pDependencies = &dep;
-        vkassert(vkCreateRenderPass(dev->ldev, &rcinfo, NULL, &ret->handle), "Failed to create renderpass");
+        vkassert(vkCreateRenderPass(dev->ldev, &rcinfo, NULL, &ret->handle));
 
         log_output(LOG_DEBUG, "Initialized renderpass");
         return ret;
@@ -153,6 +153,7 @@ void renderpass_begin(struct vkcmdbuffer *buf, struct vkrendpass *rendpass, VkFr
 
         VkRenderPassBeginInfo binfo;
         binfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        binfo.pNext = NULL;
         binfo.renderPass = rendpass->handle;
         binfo.framebuffer = framebuf;
         binfo.renderArea.offset.x = rendpass->area[0];

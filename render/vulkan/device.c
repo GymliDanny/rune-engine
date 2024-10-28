@@ -94,8 +94,8 @@ struct vkdev* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
         int num_qfams = _query_qfam_data(surface, pdevs[selected_pdev], &qfam_props);
         VkBool32 present_support;
         for (int i = 0; i < num_qfams; i++) {
-                vkassert(vkGetPhysicalDeviceSurfaceSupportKHR(dev->pdev, i, surface, &present_support), "Error retrieving present queue support");
-                if (present_support == VK_TRUE)
+                vkassert(vkGetPhysicalDeviceSurfaceSupportKHR(dev->pdev, i, surface, &present_support));
+                if (present_support == VK_TRUE && i != dev->gfx_index) {
                         dev->pres_index = i;
         }
         dev->gfx_index = _get_qfam_index(num_qfams, VK_QUEUE_GRAPHICS_BIT, qfam_props);
@@ -140,7 +140,7 @@ struct vkdev* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
         const char *ext_names = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
         dcinfo.ppEnabledExtensionNames = &ext_names;
         dcinfo.pEnabledFeatures = &pdata.pdev_feats;
-        vkassert(vkCreateDevice(dev->pdev, &dcinfo, NULL, &dev->ldev), "Error creating Vulkan logical device");
+        vkassert(vkCreateDevice(dev->pdev, &dcinfo, NULL, &dev->ldev));
 
         vkGetDeviceQueue(dev->ldev, dev->gfx_index, 0, &dev->gfx_queue);
         vkGetDeviceQueue(dev->ldev, dev->tsfr_index, 0, &dev->tsfr_queue);
@@ -152,7 +152,7 @@ struct vkdev* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
         pcinfo.pNext = NULL;
         pcinfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
         pcinfo.queueFamilyIndex = dev->gfx_index;
-        vkassert(vkCreateCommandPool(dev->ldev, &pcinfo, NULL, &dev->cmd_pool), "Error creating Vulkan command pool");
+        vkassert(vkCreateCommandPool(dev->ldev, &pcinfo, NULL, &dev->cmd_pool));
         
         log_output(LOG_DEBUG, "Initialized new logical device");
         return dev;

@@ -14,7 +14,7 @@ int _create_image_view(struct vkimage *image, struct vkdev *dev, VkFormat format
         vcinfo.subresourceRange.levelCount = 1;
         vcinfo.subresourceRange.baseArrayLayer = 0;
         vcinfo.subresourceRange.layerCount = 1;
-        vkassert(vkCreateImageView(dev->ldev, &vcinfo, NULL, &image->view), "Failed to create image view");
+        vkassert(vkCreateImageView(dev->ldev, &vcinfo, NULL, &image->view));
 }
 
 struct vkimage* create_vkimage(struct vkdev *dev, VkFormat format, uint32_t width, uint32_t height, uint32_t usage, uint32_t mem_flags, uint32_t aflags, int create_view) {
@@ -38,7 +38,7 @@ struct vkimage* create_vkimage(struct vkdev *dev, VkFormat format, uint32_t widt
         icinfo.usage = usage;
         icinfo.samples = VK_SAMPLE_COUNT_1_BIT;
         icinfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        vkassert(vkCreateImage(dev->ldev, &icinfo, NULL, &ret->handle), "Failed to create image");
+        vkassert(vkCreateImage(dev->ldev, &icinfo, NULL, &ret->handle));
 
         VkMemoryRequirements mem_req;
         vkGetImageMemoryRequirements(dev->ldev, ret->handle, &mem_req);
@@ -51,8 +51,8 @@ struct vkimage* create_vkimage(struct vkdev *dev, VkFormat format, uint32_t widt
         mainfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         mainfo.allocationSize = mem_req.size;
         mainfo.memoryTypeIndex = mem_type;
-        vkassert(vkAllocateMemory(dev->ldev, &mainfo, NULL, &ret->memory), "Failed to allocate image memory");
-        vkassert(vkBindImageMemory(dev->ldev, ret->handle, ret->memory, 0), "Failed to bind image memory");
+        vkassert(vkAllocateMemory(dev->ldev, &mainfo, NULL, &ret->memory));
+        vkassert(vkBindImageMemory(dev->ldev, ret->handle, ret->memory, 0));
 
         if (create_view == 1)
                 _create_image_view(ret, dev, format, aflags);
