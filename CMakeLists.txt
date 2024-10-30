@@ -67,7 +67,10 @@ endif()
 
 list(APPEND LINK_LIBS ${GLFW_LIBRARIES})
 
-add_compile_definitions(VERSION="${PROJECT_VERSION}")
+add_compile_definitions(RUNE_VER="${PROJECT_VERSION}")
+add_compile_definitions(RUNE_VER_MAJOR="${PROJECT_VERSION_MAJOR}")
+add_compile_definitions(RUNE_VER_MINOR="${PROJECT_VERSION_MINOR}")
+add_compile_definitions(RUNE_VER_PATCH="${PROJECT_VERSION_PATCH}")
 add_compile_definitions(RAPI_EXPORT)
 add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
 

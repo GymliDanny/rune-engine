@@ -6,7 +6,8 @@
 
 int rune_init(int argc, char* argv[]) {
         enable_log_color();
-        log_output(LOG_INFO, "Started Rune Engine version %s", VERSION);
+        log_output(LOG_INFO, "Started Rune Engine version %s", RUNE_VER);
+        _parse_args(argc, argv);
         rune_init_thread_api();
         return 0;
 }
