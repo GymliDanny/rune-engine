@@ -57,13 +57,21 @@ list(APPEND LINK_LIBS
 
 if (WIN32)
         find_package(dlfcn-win32 REQUIRED)
+        find_package(DBGHELP REQUIRED)
         set(GLFW_LIBRARIES glfw3dll)
         set(DX12_LIBRARIES d3d12.lib dxgi.lib dxguid.lib)
         set(DL_LIBRARIES dlfcn-win32::dl)
-        list(APPEND LINK_LIBS ${DX12_LIBRARIES} ${DL_LIBRARIES})
-else()
+        list(APPEND LINK_LIBS ${DX12_LIBRARIES} ${DL_LIBRARIES} ${DBGHELP_LIBRARY})
+else ()
         set(GLFW_LIBRARIES glfw)
-endif()
+endif ()
+
+include(EnableCFLAG)
+if (MSVC)
+        enable_c_compiler_flag_if_supported("/GS")
+else ()
+        enable_c_compiler_flag_if_supported("-fstack-protector-all")
+endif ()
 
 list(APPEND LINK_LIBS ${GLFW_LIBRARIES})
 
