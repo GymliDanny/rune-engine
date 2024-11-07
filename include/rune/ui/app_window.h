@@ -19,8 +19,8 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef RUNE_UI_WINDOW_H
-#define RUNE_UI_WINDOW_H
+#ifndef RUNE_UI_APP_WINDOW_H
+#define RUNE_UI_APP_WINDOW_H
 
 #include <rune/util/types.h>
 #include <GLFW/glfw3.h>
@@ -32,7 +32,7 @@ struct rune_window {
         GLFWwindow *window;
 };
 
-RAPI struct rune_window* rune_init_window(uint32_t width, uint32_t height, const char *title);
+RAPI struct rune_window* rune_init_window(void);
 RAPI void rune_destroy_window(struct rune_window *window);
 
 #endif
