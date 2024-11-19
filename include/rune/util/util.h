@@ -38,6 +38,13 @@
 #define GLFW_DLL 1
 #endif
 
+#ifdef _WIN32
+        #define NORET __declspec(noreturn)
+#else
+        #define NORET __attribute__((noreturn))
+#endif
+
+
 /// Make API functions visible outside of the library
 #ifdef RAPI_EXPORT
         #ifdef _WIN32
