@@ -8,7 +8,12 @@ int _create_image_view(struct vkimage *image, struct vkdev *dev, VkFormat format
         vcinfo.pNext = NULL;
         vcinfo.flags = 0;
         vcinfo.image = image->handle;
+        vcinfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
         vcinfo.format = format;
+        vcinfo.components.r = VK_COMPONENT_SWIZZLE_R;
+        vcinfo.components.g = VK_COMPONENT_SWIZZLE_G;
+        vcinfo.components.b = VK_COMPONENT_SWIZZLE_B;
+        vcinfo.components.a = VK_COMPONENT_SWIZZLE_A;
         vcinfo.subresourceRange.aspectMask = aflags;
         vcinfo.subresourceRange.baseMipLevel = 0;
         vcinfo.subresourceRange.levelCount = 1;
@@ -49,6 +54,7 @@ struct vkimage* create_vkimage(struct vkdev *dev, VkFormat format, uint32_t widt
 
         VkMemoryAllocateInfo mainfo;
         mainfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        mainfo.pNext = NULL;
         mainfo.allocationSize = mem_req.size;
         mainfo.memoryTypeIndex = mem_type;
         vkassert(vkAllocateMemory(dev->ldev, &mainfo, NULL, &ret->memory));

@@ -72,7 +72,7 @@ void cmdbuf_end_single_use(struct vkcmdbuffer *cmdbuffer, struct vkdev *dev, VkQ
 struct vkrendpass* create_vkrendpass(struct vkdev *dev, struct vkswapchain *swapchain, vec4 area, vec4 color, float depth, uint32_t stencil) {
         VkAttachmentDescription atdesc[2];
         atdesc[0].flags = 0;
-        atdesc[0].format = swapchain->format;
+        atdesc[0].format = swapchain->format_khr.format;
         atdesc[0].samples = VK_SAMPLE_COUNT_1_BIT;
         atdesc[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         atdesc[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -120,6 +120,16 @@ struct vkrendpass* create_vkrendpass(struct vkdev *dev, struct vkswapchain *swap
         dep.dependencyFlags = 0;
 
         struct vkrendpass *ret = rune_alloc(sizeof(struct vkrendpass));
+        ret->color[0] = color[0];
+        ret->color[1] = color[1];
+        ret->color[2] = color[2];
+        ret->color[3] = color[3];
+        ret->area[0] = area[0];
+        ret->area[1] = area[1];
+        ret->area[2] = area[2];
+        ret->area[3] = area[3];
+        ret->depth = depth;
+        ret->stencil = stencil;
         VkRenderPassCreateInfo rcinfo;
         rcinfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         rcinfo.pNext = NULL;
