@@ -1,0 +1,12 @@
+if (MSVC)
+        set(DBGHELP_INCLUDE_DIR "")
+        set(DBGHELP_LIBRARY "dbghelp")
+        set(DBGHELP_FOUND TRUE)
+else ()
+        find_path(DBGHELP_INCLUDE_DIR NAMES dbghelp.h PATH_SUFFIXES include)
+        set(DBGHELP_NAMES ${DBGHELP_NAMES} dbghelp)
+        find_library(DBGHELP_LIBRARY NAMES ${DBGHELP_NAMES})
+
+        include(FindPackageHandleStandardArgs)
+        find_package_handle_standard_args(DBGHELP DEFAULT_MSG DBGHELP_LIBRARY DBGHELP_INCLUDE_DIR)
+endif ()
