@@ -3,12 +3,10 @@
 #include <rune/core/alloc.h>
 #include <rune/core/logging.h>
 
-struct vkqfam_data {
-        uint32_t gfx;
-        uint32_t present;
-        uint32_t compute;
-        uint32_t transfer;
-};
+static int gfx_qfam = -1;
+static int tsfr_qfam = -1;
+static int comp_qfam = -1;
+static int pres_qfam = -1;
 
 struct vkdev_data {
         VkPhysicalDeviceProperties pdev_props;
@@ -18,26 +16,52 @@ struct vkdev_data {
         const char** pdev_extensions;
 };
 
-int _query_qfam_data(VkSurfaceKHR surface, VkPhysicalDevice pdev, VkQueueFamilyProperties **qfam_props) {
-        uint32_t qfam_count = 0;
-        vkGetPhysicalDeviceQueueFamilyProperties(pdev, &qfam_count, NULL);
-        *qfam_props = rune_alloc(sizeof(VkQueueFamilyProperties) * qfam_count);
-        vkGetPhysicalDeviceQueueFamilyProperties(pdev, &qfam_count, *qfam_props);
-        return qfam_count;
-}
-
 void _query_pdev_data(VkPhysicalDevice pdev, struct vkdev_data *pdata) {
         vkGetPhysicalDeviceProperties(pdev, &pdata->pdev_props);
         vkGetPhysicalDeviceFeatures(pdev, &pdata->pdev_feats);
         vkGetPhysicalDeviceMemoryProperties(pdev, &pdata->pdev_mprops);
 }
 
-int _get_qfam_index(int num_props, uint32_t queue_type, VkQueueFamilyProperties *qfam_props) {
+uint32_t _query_qfam_data(VkSurfaceKHR surface, VkPhysicalDevice pdev, VkQueueFamilyProperties** qfam_props) {
+        uint32_t count;
+        vkGetPhysicalDeviceQueueFamilyProperties(pdev, &count, NULL);
+        *qfam_props = rune_alloc(sizeof(VkQueueFamilyProperties) * count);
+        vkGetPhysicalDeviceQueueFamilyProperties(pdev, &count, *qfam_props);
+        return count;
+}
+
+int _query_gfx_index(int num_props, VkQueueFamilyProperties *qfam_props) {
         for (int i = 0; i < num_props; i++) {
-                if (qfam_props[i].queueFlags & queue_type)
-                        return i;
+                if (qfam_props[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+                        gfx_qfam = i;
         }
-        return -1;
+        return gfx_qfam;
+}
+
+int _query_tsfr_index(int num_props, VkQueueFamilyProperties *qfam_props) {
+        for (int i = 0; i < num_props; i++) {
+                if (qfam_props[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
+                        tsfr_qfam = i;
+        }
+        return tsfr_qfam;
+}
+
+int _query_comp_index(int num_props, VkQueueFamilyProperties *qfam_props) {
+        for (int i = 0; i < num_props; i++) {
+                if (qfam_props[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
+                        comp_qfam = i;
+        }
+        return comp_qfam;
+}
+
+int _query_pres_index(int num_props, VkQueueFamilyProperties *qfam_props, VkPhysicalDevice pdev, VkSurfaceKHR surface) {
+        VkBool32 present_bit;
+        for (int i = 0; i < num_props; i++) {
+                vkGetPhysicalDeviceSurfaceSupportKHR(pdev, 0, surface, &present_bit);
+                if (present_bit != VK_FALSE)
+                        pres_qfam = i;
+        }
+        return pres_qfam;
 }
 
 int _check_pdev(VkSurfaceKHR surface, VkPhysicalDevice pdev) {
@@ -49,90 +73,78 @@ int _check_pdev(VkSurfaceKHR surface, VkPhysicalDevice pdev) {
                 return score;
 
         VkQueueFamilyProperties *qfam_props;
-        int num_qfams = _query_qfam_data(surface, pdev, &qfam_props);
-        if (_get_qfam_index(num_qfams, VK_QUEUE_GRAPHICS_BIT, qfam_props) != -1)
+        uint32_t num_qfams = _query_qfam_data(surface, pdev, &qfam_props); 
+        if (_query_gfx_index(num_qfams, qfam_props) != -1)
                 score += 20;
-        if (_get_qfam_index(num_qfams, VK_QUEUE_COMPUTE_BIT, qfam_props) != -1)
-                score += 5;
-        if (_get_qfam_index(num_qfams, VK_QUEUE_TRANSFER_BIT, qfam_props) != -1)
+        if (_query_comp_index(num_qfams, qfam_props) != -1)
                 score += 20;
-
-        VkBool32 present_bit;
-        vkGetPhysicalDeviceSurfaceSupportKHR(pdev, 0, surface, &present_bit);
-        if (present_bit != VK_FALSE)
+        if (_query_tsfr_index(num_qfams, qfam_props) != -1)
+                score += 20;
+        if (_query_pres_index(num_qfams, qfam_props, pdev, surface) != -1)
                 score += 20;
 
         rune_free(qfam_props);
         return score;
 }
 
+VkPhysicalDevice _select_pdev(VkInstance instance, VkSurfaceKHR surface) {
+        uint32_t count;
+        vkEnumeratePhysicalDevices(instance, &count, NULL);
+        if (count == 0)
+                return NULL;
+
+        VkPhysicalDevice pdevs[count];
+        vkEnumeratePhysicalDevices(instance, &count, pdevs);
+
+        for (uint32_t i = 0; i < count; i++) {
+                if (_check_pdev(surface, pdevs[i]) >= 80)
+                        return pdevs[i];
+        }
+        return NULL;
+}
+
+void _create_queue(struct vkdev *dev, int qfam_index, int queue_index) {
+        vkGetDeviceQueue(dev->ldev, qfam_index, queue_index, &dev->queues[qfam_index].handle);
+        if (dev->queues[qfam_index].handle == NULL) {
+                log_output(LOG_FATAL, "Error creating required Vulkan queue");
+                rune_abort();
+        }
+}
+
 struct vkdev* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
-        uint32_t pdev_count;
-        vkEnumeratePhysicalDevices(instance, &pdev_count, NULL);
-        if (pdev_count == 0)
-                return NULL;
-        VkPhysicalDevice pdevs[pdev_count];
-        vkEnumeratePhysicalDevices(instance, &pdev_count, pdevs);
-
-        uint32_t selected_pdev = -1;
-        for (uint32_t i = 0; i < pdev_count; i++) {
-                if (_check_pdev(surface, pdevs[i]) >= 60) {
-                        selected_pdev = i;
-                        break;
-                }
-        }
-
-        if (selected_pdev == -1) {
+        VkPhysicalDevice pdev = _select_pdev(instance, surface);
+        if (pdev == NULL) {
                 log_output(LOG_FATAL, "No device meets minimum requirements for rendering");
-                return NULL;
+                rune_abort();
         }
 
-        struct vkdev *dev = rune_alloc(sizeof(struct vkdev));
-        dev->pdev = pdevs[selected_pdev];
+        struct vkdev *dev = rune_calloc(0, sizeof(struct vkdev));
+        dev->pdev = pdev;
 
-        VkQueueFamilyProperties *qfam_props;
-        int num_qfams = _query_qfam_data(surface, pdevs[selected_pdev], &qfam_props);
-        VkBool32 present_support;
-        for (int i = 0; i < num_qfams; i++) {
-                vkassert(vkGetPhysicalDeviceSurfaceSupportKHR(dev->pdev, i, surface, &present_support));
-                if (present_support == VK_TRUE && i != dev->gfx_index) {
-                        dev->pres_index = i;
-        }
-        dev->gfx_index = _get_qfam_index(num_qfams, VK_QUEUE_GRAPHICS_BIT, qfam_props);
-        dev->tsfr_index = _get_qfam_index(num_qfams, VK_QUEUE_TRANSFER_BIT, qfam_props);
-        dev->comp_index = _get_qfam_index(num_qfams, VK_QUEUE_COMPUTE_BIT, qfam_props);
+        dev->queues[0].index = gfx_qfam;
+        dev->queues[1].index = tsfr_qfam;
+        dev->queues[2].index = comp_qfam;
+        dev->queues[3].index = pres_qfam;
 
         float queue_priority = 1.0f;
         VkDeviceQueueCreateInfo qcinfos[3];
-        qcinfos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        qcinfos[0].queueFamilyIndex = dev->gfx_index;
-        qcinfos[0].queueCount = 1;
-        qcinfos[0].flags = 0;
-        qcinfos[0].pNext = NULL;
-        qcinfos[0].pQueuePriorities = &queue_priority;
-
-        qcinfos[1].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        qcinfos[1].queueFamilyIndex = dev->tsfr_index;
-        qcinfos[1].queueCount = 1;
-        qcinfos[1].flags = 0;
-        qcinfos[1].pNext = NULL;
-        qcinfos[1].pQueuePriorities = &queue_priority;
-
-        qcinfos[2].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        qcinfos[2].queueFamilyIndex = dev->comp_index;
-        qcinfos[2].queueCount = 1;
-        qcinfos[2].flags = 0;
-        qcinfos[2].pNext = NULL;
-        qcinfos[2].pQueuePriorities = &queue_priority;
+        for (int i = 0; i < 3; i++) {
+                qcinfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+                qcinfos[i].pNext = NULL;
+                qcinfos[i].flags = 0;
+                qcinfos[i].queueFamilyIndex = dev->queues[i].index;
+                qcinfos[i].queueCount = 1;
+                qcinfos[i].pQueuePriorities = &queue_priority;
+        }
 
         struct vkdev_data pdata;
-        _query_pdev_data(pdevs[selected_pdev], &pdata);
+        _query_pdev_data(pdev, &pdata);
 
         VkDeviceCreateInfo dcinfo;
         dcinfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         dcinfo.pNext = NULL;
         dcinfo.flags = 0;
-        dcinfo.queueCreateInfoCount = 2;
+        dcinfo.queueCreateInfoCount = 3;
         dcinfo.pQueueCreateInfos = qcinfos;
         dcinfo.enabledLayerCount = 0;
         dcinfo.ppEnabledLayerNames = NULL;
@@ -142,32 +154,14 @@ struct vkdev* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
         dcinfo.pEnabledFeatures = &pdata.pdev_feats;
         vkassert(vkCreateDevice(dev->pdev, &dcinfo, NULL, &dev->ldev));
 
-        vkGetDeviceQueue(dev->ldev, dev->gfx_index, 0, &dev->gfx_queue);
-        if (dev->gfx_queue == NULL) {
-                log_output(LOG_FATAL, "Error creating Vulkan graphics queue");
-                rune_abort();
-        }
-        vkGetDeviceQueue(dev->ldev, dev->tsfr_index, 0, &dev->tsfr_queue);
-        if (dev->tsfr_queue == NULL) {
-                log_output(LOG_FATAL, "Error creating Vulkan transfer queue");
-                rune_abort();
-        }
-        vkGetDeviceQueue(dev->ldev, dev->pres_index, 0, &dev->pres_queue);
-        if (dev->pres_queue == NULL) {
-                log_output(LOG_FATAL, "Error creating Vulkan present queue");
-                rune_abort();
-        }
-        vkGetDeviceQueue(dev->ldev, dev->comp_index, 0, &dev->comp_queue);
-        if (dev->comp_queue == NULL) {
-                log_output(LOG_FATAL, "Error creating Vulkan compute queue");
-                rune_abort();
-        }
+        for (uint32_t i = 0; i < 3; i++)
+                _create_queue(dev, i, 0);
 
         VkCommandPoolCreateInfo pcinfo;
         pcinfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         pcinfo.pNext = NULL;
         pcinfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        pcinfo.queueFamilyIndex = dev->gfx_index;
+        pcinfo.queueFamilyIndex = dev->queues[0].index;
         vkassert(vkCreateCommandPool(dev->ldev, &pcinfo, NULL, &dev->cmd_pool));
         
         log_output(LOG_DEBUG, "Initialized new logical device");

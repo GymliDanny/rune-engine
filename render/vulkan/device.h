@@ -34,18 +34,17 @@ struct vkswapchain_data {
         uint32_t present_count;
 };
 
+struct vkqueue {
+        uint32_t index;
+        uint32_t qfam;
+        VkQueue handle;
+};
+
 struct vkdev {
         VkPhysicalDevice pdev;
         VkDevice ldev;
         struct vkswapchain_data scdata;
-        uint32_t gfx_index;
-        uint32_t pres_index;
-        uint32_t tsfr_index;
-        uint32_t comp_index;
-        VkQueue gfx_queue;
-        VkQueue pres_queue;
-        VkQueue tsfr_queue;
-        VkQueue comp_queue;
+        struct vkqueue queues[4];
         VkCommandPool cmd_pool;
         VkFormat depth_format;
 };

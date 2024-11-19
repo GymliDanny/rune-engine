@@ -37,8 +37,8 @@ struct vkswapchain* create_swapchain(struct vksurface *surface, struct vkdev *de
         cinfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
         cinfo.clipped = VK_TRUE;
         cinfo.oldSwapchain = NULL;
-        if (dev->gfx_index != dev->pres_index) {
-                uint32_t qfams[] = {dev->gfx_index, dev->pres_index};
+        if (dev->queues[0].index != dev->queues[3].index) {
+                uint32_t qfams[] = {dev->queues[0].index, dev->queues[3].index};
                 cinfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
                 cinfo.queueFamilyIndexCount = 2;
                 cinfo.pQueueFamilyIndices = qfams;
@@ -57,9 +57,10 @@ struct vkswapchain* create_swapchain(struct vksurface *surface, struct vkdev *de
         VkImageViewCreateInfo vcinfo;
         for (uint32_t i = 0; i < swapchain->img_count; i++) {
                 vcinfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                vcinfo.pNext = NULL;
                 vcinfo.image = swapchain->images[i];
                 vcinfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-                vcinfo.format = swapchain->format;
+                vcinfo.format = swapchain->format_khr.format;
                 vcinfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
                 vcinfo.subresourceRange.baseMipLevel = 0;
                 vcinfo.subresourceRange.levelCount = 1;
@@ -103,10 +104,10 @@ void vkswapchain_present(struct vkswapchain *swapchain, struct vkdev *dev) {
         pinfo.pWaitSemaphores = &swapchain->render_complete;
         pinfo.swapchainCount = 1;
         pinfo.pSwapchains = &swapchain->handle;
-        pinfo.pImageIndices = &dev->pres_index;
+        pinfo.pImageIndices = &dev->queues[3].index;
         pinfo.pResults = NULL;
 
-        VkResult res = vkQueuePresentKHR(dev->pres_queue, &pinfo);
+        VkResult res = vkQueuePresentKHR(dev->queues[3].handle, &pinfo);
         if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
                 STUBBED("Recreate swapchain");
         else if (res != VK_SUCCESS)
