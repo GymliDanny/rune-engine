@@ -1,6 +1,7 @@
 #include <rune/core/abort.h>
 #include <rune/core/init.h>
 #include <rune/core/logging.h>
+#include <rune/util/exits.h>
 #include <stdlib.h>
 
 #define MAX_TRACE_ITEMS 30
@@ -50,7 +51,7 @@ NORET void rune_abort(void) {
         log_output(LOG_INFO, "Abort called, printing stack trace");
         _stack_trace();
         rune_exit();
-        exit(-1);
+        exit(REXIT_FAIL);
 }
 
 #ifdef MSVC

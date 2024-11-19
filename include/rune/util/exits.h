@@ -19,25 +19,10 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef RUNE_H
-#define RUNE_H
+#ifndef RUNE_EXITS_H
+#define RUNE_EXITS_H
 
-#include <rune/core/abort.h>
-#include <rune/core/alloc.h>
-#include <rune/core/callbacks.h>
-#include <rune/core/init.h>
-#include <rune/core/logging.h>
-#include <rune/core/mod.h>
-#include <rune/core/thread.h>
-
-#include <rune/ui/input.h>
-#include <rune/ui/scancode.h>
-#include <rune/ui/window.h>
-
-#include <rune/render/renderer.h>
-
-#include <rune/util/exits.h>
-#include <rune/util/list.h>
-#include <rune/util/types.h>
+#define REXIT_FAIL      -1
+#define REXIT_OK        0
 
 #endif
