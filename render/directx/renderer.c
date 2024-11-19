@@ -1,6 +1,6 @@
-#include <rune/ui/renderer.h>
-#include <rune/core/logging.h>
 #include <rune/core/abort.h>
+#include <rune/core/logging.h>
+#include <rune/render/renderer.h>
 
 #ifdef _WIN32
 

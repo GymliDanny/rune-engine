@@ -129,7 +129,7 @@ int _init_vulkan(struct rune_window *window) {
         return 0;
 }
 
-void _close_vulkan(struct rune_renderer *renderer) {
+void _close_vulkan(void) {
         vkDeviceWaitIdle(context->dev->ldev);
         for (uint8_t i = 0; i < context->swapchain->max_frames; i++) {
                 if (context->image_semaphores[i] != NULL)
@@ -158,11 +158,10 @@ void _clear_vulkan(void) {
 
 struct rune_renderer* select_render_vulkan(struct rune_window *window) {
         struct rune_renderer *ret = rune_alloc(sizeof(struct rune_renderer));
-        ret->init = _init_vulkan;
         ret->close = _close_vulkan;
         ret->draw = _draw_vulkan;
         ret->clear = _clear_vulkan;
-        if ((*ret->init)(window) != 0)
+        if (_init_vulkan(window) != 0)
                 rune_abort();
         return ret;
 }
