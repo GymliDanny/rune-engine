@@ -5,8 +5,8 @@
 #include <string.h>
 #include <stdatomic.h>
 
-static struct thread *threads = NULL;
-static struct mutex *mutexes = NULL;
+static struct list_head *threads = NULL;
+static struct list_head *mutexes = NULL;
 static int next_tid = 0;
 static int next_mid = 0;
 
@@ -20,7 +20,7 @@ static struct thread* _find_thread_by_handle(void *handle) {
         if (threads == NULL)
                 return NULL;
 
-        struct list_head *temp = &threads->list;
+        struct list_head *temp = threads;
         struct thread *ret;
         while (temp != NULL) {
                 ret = (struct thread*)((void*)temp - offsetof(struct thread, list));
@@ -35,7 +35,7 @@ static struct thread* _find_thread_by_id(int ID) {
         if (threads == NULL)
                 return NULL;
 
-        struct list_head *temp = &threads->list;
+        struct list_head *temp = threads;
         struct thread *ret;
         while (temp != NULL) {
                 ret = (struct thread*)((void*)temp - offsetof(struct thread, list));
@@ -50,7 +50,7 @@ static struct mutex* _find_mutex_by_id(int ID) {
         if (mutexes == NULL)
                 return NULL;
 
-        struct list_head *temp = &mutexes->list;
+        struct list_head *temp = mutexes;
         struct mutex *ret;
         while (temp != NULL) {
                 ret = (struct mutex*)((void*)temp - offsetof(struct mutex, list));
@@ -64,7 +64,8 @@ static struct mutex* _find_mutex_by_id(int ID) {
 
 static void _cleanup_pthread(void *arg) {
         struct thread *thread = (struct thread*)arg;
-        list_del(&thread->list);
+        if (&thread->list != threads)
+                list_del(&thread->list);
         rune_free(thread->thread_handle);
         rune_free(thread);
 }
@@ -81,11 +82,11 @@ static void* _startup_pthread(void *arg) {
 }
 
 void rune_init_thread_api(void) {
-        threads = rune_alloc(sizeof(struct thread));
-        threads->ID = next_tid++;
-        threads->detached = 0;
-        threads->thread_handle = rune_alloc(sizeof(pthread_t));
-        *(pthread_t*)threads->thread_handle = pthread_self();
+        struct thread *start_thread = rune_alloc(sizeof(struct thread));
+        start_thread->ID = next_tid++;
+        start_thread->detached = 0;
+        start_thread->thread_handle = rune_alloc(sizeof(pthread_t));
+        *(pthread_t*)start_thread->thread_handle = pthread_self();
         pthread_cleanup_push(_cleanup_pthread, threads);
         pthread_cleanup_pop(0);
 }
@@ -95,7 +96,10 @@ int rune_thread_init(void* (*thread_fn)(void *data), void *data, int detached) {
         thread->ID = next_tid++;
         thread->detached = detached;
         thread->thread_handle = rune_alloc(sizeof(pthread_t));
-        list_add(&thread->list, &threads->list);
+        if (threads == NULL)
+                threads = &thread->list;
+        else
+                list_add(&thread->list, threads);
 
         struct start_args *args = rune_alloc(sizeof(struct start_args));
         args->thread = thread;
@@ -160,16 +164,17 @@ int rune_mutex_init(void) {
         mutex->mutex_handle = rune_alloc(sizeof(pthread_mutex_t));
         pthread_mutex_init((pthread_mutex_t*)mutex->mutex_handle, NULL);
         if (mutexes == NULL)
-                mutexes = mutex;
+                mutexes = &mutex->list;
         else
-                list_add(&mutex->list, &mutexes->list);
+                list_add(&mutex->list, mutexes);
         return mutex->ID;
 }
 
 int rune_mutex_destroy(int ID) {
         struct mutex *mutex = _find_mutex_by_id(ID);
         rune_free(mutex->mutex_handle);
-        list_del(&mutex->list);
+        if (&mutex->list != mutexes)
+                list_del(&mutex->list);
         rune_free(mutex);
 }
 
