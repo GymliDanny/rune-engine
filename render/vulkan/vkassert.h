@@ -1,9 +1,9 @@
 #ifndef VKASSERT_H
 #define VKASSERT_H
 
+#include "vk_types.h"
 #include <rune/core/logging.h>
 #include <rune/core/abort.h>
-#include <vulkan/vulkan.h>
 #include <string.h>
 
 static char* get_vkerr_str(VkResult res) {

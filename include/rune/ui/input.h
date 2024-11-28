@@ -23,7 +23,7 @@
 #define RUNE_UI_INPUT_H
 
 #include <rune/util/types.h>
-#include <rune/ui/window.h>
+#include <rune/ui/app_window.h>
 
 #define KB_MODE_RAW     0
 #define KB_MODE_TEXT    1

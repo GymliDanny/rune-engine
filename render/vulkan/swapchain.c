@@ -1,6 +1,7 @@
 #include "swapchain.h"
-#include "vkassert.h"
 #include "image.h"
+#include "device.h"
+#include "vkassert.h"
 #include <rune/core/logging.h>
 #include <rune/core/alloc.h>
 #include <rune/util/stubbed.h>

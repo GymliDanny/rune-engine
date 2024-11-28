@@ -1,4 +1,5 @@
 #include "image.h"
+#include "device.h"
 #include "vkassert.h"
 #include <rune/core/alloc.h>
 

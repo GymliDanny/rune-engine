@@ -1,10 +1,7 @@
 #ifndef VKRENDERPASS_H
 #define VKRENDERPASS_H
 
-#include "swapchain.h"
-#include "device.h"
-#include <rune/util/types.h>
-#include <cglm/cglm.h>
+#include "vk_types.h"
 
 enum cmdbuf_state {
         CMDBUF_READY,
@@ -12,19 +9,6 @@ enum cmdbuf_state {
         CMDBUF_RPASS,
         CMDBUF_ENDREC,
         CMDBUF_SUBMIT
-};
-
-struct vkcmdbuffer {
-        VkCommandBuffer handle;
-        int state;
-};
-
-struct vkrendpass {
-        VkRenderPass handle;
-        vec4 area;
-        vec4 color;
-        float depth;
-        uint32_t stencil;
 };
 
 struct vkcmdbuffer* create_vkcmdbuffer(struct vkdev *dev, int primary);

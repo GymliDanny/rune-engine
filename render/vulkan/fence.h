@@ -1,14 +1,7 @@
 #ifndef VKFENCE_H
 #define VKFENCE_H
 
-#include "device.h"
-#include <rune/util/types.h>
-#include <vulkan/vulkan.h>
-
-struct vkfence {
-        VkFence handle;
-        int signal;
-};
+#include "vk_types.h"
 
 struct vkfence* create_vkfence(struct vkdev *dev, uint8_t signal);
 void destroy_vkfence(struct vkfence *fence, struct vkdev *dev);
