@@ -46,7 +46,12 @@ void destroy_vkcmdbuffer(vkcmdbuffer_t *cmdbuffer, vkdev_t *dev) {
         rune_free(cmdbuffer);
 }
 
-void cmdbuf_begin(struct vkcmdbuffer *cmdbuffer, int single, int rpass_cont, int sim_use) {
+void cmdbuf_begin(vkcmdbuffer_t *cmdbuffer, int single, int rpass_cont, int sim_use) {
+        if (cmdbuffer->state != CMDBUF_INITIAL) {
+                log_output(LOG_FATAL, "Attempted to record to a command buffer not in initial state");
+                rune_abort();
+        }
+
         VkCommandBufferBeginInfo binfo;
         binfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         binfo.flags = 0;
@@ -61,13 +66,43 @@ void cmdbuf_begin(struct vkcmdbuffer *cmdbuffer, int single, int rpass_cont, int
         cmdbuffer->state = CMDBUF_RECORDING;
 }
 
-void cmdbuf_end(struct vkcmdbuffer *cmdbuffer) {
+void cmdbuf_end(vkcmdbuffer_t *cmdbuffer) {
+        if (cmdbuffer->state != CMDBUF_RECORDING) {
+                log_output(LOG_FATAL, "Attempted to end command buffer not in recording state");
+                rune_abort();
+        }
+
         vkassert(vkEndCommandBuffer(cmdbuffer->handle));
         cmdbuffer->state = CMDBUF_READY;
 }
 
-struct vkcmdbuffer* cmdbuf_begin_single_use(struct vkdev *dev) {
-        struct vkcmdbuffer *ret = create_vkcmdbuffer(dev, 1);
+void cmdbuf_submit(vkcmdbuffer_t *cmdbuffer, VkSemaphore *signal, VkSemaphore *wait, VkQueue queue_handle, VkFence fence_handle) {
+        if (cmdbuffer->state != CMDBUF_READY) {
+                log_output(LOG_FATAL, "Attempted to submit command buffer not in ready state");
+                return;
+        }
+
+        VkSubmitInfo sinfo;
+        sinfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        sinfo.pNext = NULL;
+        sinfo.commandBufferCount = 1;
+        sinfo.pCommandBuffers = &cmdbuffer->handle;
+        sinfo.signalSemaphoreCount = 1;
+        sinfo.pSignalSemaphores = signal;
+        sinfo.waitSemaphoreCount = 1;
+        sinfo.pWaitSemaphores = wait;
+        VkPipelineStageFlags flags[1] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+        sinfo.pWaitDstStageMask = flags;
+        vkassert(vkQueueSubmit(queue_handle, 1, &sinfo, fence_handle));
+        cmdbuffer->state = CMDBUF_SUBMITTED;
+}
+
+void cmdbuf_reset(vkcmdbuffer_t *cmdbuffer) {
+        cmdbuffer->state = CMDBUF_INITIAL;
+}
+
+vkcmdbuffer_t* cmdbuf_begin_single_use(vkdev_t *dev) {
+        vkcmdbuffer_t *ret = create_vkcmdbuffer(dev, 1);
         cmdbuf_begin(ret, 1, 0, 0);
         return ret;
 }
@@ -173,7 +208,12 @@ void destroy_vkrendpass(vkrendpass_t *rendpass, vkdev_t *dev) {
         rune_free(rendpass);
 }
 
-void renderpass_begin(struct vkcmdbuffer *buf, struct vkrendpass *rendpass, VkFramebuffer framebuf) {
+void renderpass_begin(vkcmdbuffer_t *buf, vkrendpass_t *rendpass, VkFramebuffer framebuf) {
+        if (buf->state != CMDBUF_RECORDING) {
+                log_output(LOG_FATAL, "Attempted to place command buffer not in recording state in a render pass");
+                rune_abort();
+        }
+
         VkClearValue cvals[2];
         cvals[0].color.float32[0] = rendpass->color[0];
         cvals[0].color.float32[1] = rendpass->color[1];
@@ -198,7 +238,12 @@ void renderpass_begin(struct vkcmdbuffer *buf, struct vkrendpass *rendpass, VkFr
         buf->state = CMDBUF_IN_RENDERPASS;
 }
 
-void renderpass_end(struct vkcmdbuffer *buf, struct vkrendpass *rendpass) {
+void renderpass_end(vkcmdbuffer_t *buf, vkrendpass_t *rendpass) {
+        if (buf->state != CMDBUF_IN_RENDERPASS) {
+                log_output(LOG_FATAL, "Attempted to purge command buffer not in render pass");
+                rune_abort();
+        }
+
         vkCmdEndRenderPass(buf->handle);
         buf->state = CMDBUF_RECORDING;
 }

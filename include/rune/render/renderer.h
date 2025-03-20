@@ -23,15 +23,15 @@
 #define RUNE_RENDER_RENDERER_H
 
 #include <rune/util/types.h>
-#include <rune/ui/app_window.h>
+#include <rune/ui/window.h>
 
-struct rune_renderer {
+typedef struct rune_renderer {
         void (*close)(void);
         void (*draw)(void);
         void (*clear)(void);
-};
+} renderer_t;
 
-RAPI struct rune_renderer* select_render_vulkan(struct rune_window *window);
-RAPI struct rune_renderer* select_render_directx(struct rune_window *window);
+RAPI renderer_t* select_render_vulkan(window_t *window);
+RAPI renderer_t* select_render_directx(window_t *window);
 
 #endif
