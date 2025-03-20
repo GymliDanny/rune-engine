@@ -38,9 +38,4 @@ RAPI int rune_init(int argc, char* argv[]);
  */
 RAPI void rune_exit(void);
 
-/**
- * \brief Hot-reloads the entire engine library from disk
- */
-RAPI int rune_hot_reload(void);
-
 #endif
