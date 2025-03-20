@@ -23,17 +23,17 @@
 #define RUNE_UI_INPUT_H
 
 #include <rune/util/types.h>
-#include <rune/ui/app_window.h>
+#include <rune/ui/window.h>
 
 #define KB_MODE_RAW     0
 #define KB_MODE_TEXT    1
 
-RAPI int rune_input_init(struct rune_window *window);
+RAPI int rune_input_init(window_t *window);
 
 RAPI void set_keyboard_mode(int mode);
 RAPI int get_keyboard_mode(void);
 
-RAPI void register_key_hook(uint8_t scancode, void (*func)(void));
+RAPI void register_input_callback(uint8_t scancode, void (*func)(void*), void *data);
 RAPI void rune_input_tick(void);
 
 #endif
