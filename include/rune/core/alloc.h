@@ -28,12 +28,12 @@
 /**
  * Memory block used for memory accounting
  */
-struct mem_block {
+typedef struct mem_block {
         void *ptr;
         size_t sz;
         int free;
-        struct list_head list;
-};
+        list_head_t list;
+} mem_block_t;
 
 /**
  * \brief Custom malloc implementation
