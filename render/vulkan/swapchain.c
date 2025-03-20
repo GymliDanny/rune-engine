@@ -1,3 +1,24 @@
+/*
+ * Rune Game Engine
+ * Copyright 2024 Danny Holman <dholman@gymli.org>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
 #include "swapchain.h"
 #include "image.h"
 #include "device.h"
@@ -6,8 +27,8 @@
 #include <rune/core/alloc.h>
 #include <rune/util/stubbed.h>
 
-struct vkswapchain* create_swapchain(struct vksurface *surface, struct vkdev *dev) {
-        struct vkswapchain *swapchain = rune_alloc(sizeof(struct vkswapchain));
+vkswapchain_t* create_swapchain(vksurface_t *surface, vkdev_t *dev) {
+        vkswapchain_t *swapchain = rune_alloc(sizeof(vkswapchain_t));
         VkExtent2D sc_extent = {surface->width, surface->height};
         swapchain->max_frames = 2;
         get_swapchain_data(dev, &surface->handle);
@@ -38,8 +59,8 @@ struct vkswapchain* create_swapchain(struct vksurface *surface, struct vkdev *de
         cinfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
         cinfo.clipped = VK_TRUE;
         cinfo.oldSwapchain = NULL;
-        if (dev->queues[0].index != dev->queues[3].index) {
-                uint32_t qfams[] = {dev->queues[0].index, dev->queues[3].index};
+        if (dev->queues[0].qfam != dev->queues[3].qfam) {
+                uint32_t qfams[] = {dev->queues[0].qfam, dev->queues[3].qfam};
                 cinfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
                 cinfo.queueFamilyIndexCount = 2;
                 cinfo.pQueueFamilyIndices = qfams;
@@ -88,7 +109,7 @@ struct vkswapchain* create_swapchain(struct vksurface *surface, struct vkdev *de
         return swapchain;
 }
 
-void destroy_swapchain(struct vkswapchain *swapchain, struct vkdev *dev) {
+void destroy_swapchain(vkswapchain_t *swapchain, vkdev_t *dev) {
         for (uint32_t i = 0; i < swapchain->img_count; i++)
                 vkDestroyImageView(dev->ldev, swapchain->views[i], NULL);
         destroy_vkimage(swapchain->depth_attachment, dev);
@@ -97,15 +118,26 @@ void destroy_swapchain(struct vkswapchain *swapchain, struct vkdev *dev) {
         rune_free(swapchain->views);
 }
 
-void vkswapchain_present(struct vkswapchain *swapchain, struct vkdev *dev) {
+int32_t vkswapchain_get_next_img(vkswapchain_t *swapchain, vkdev_t *dev, uint64_t tmout, VkFence fence, VkSemaphore img_available) {
+        uint32_t ret = 0;
+        VkResult res = vkAcquireNextImageKHR(dev->ldev, swapchain->handle, tmout, img_available, fence, &ret);
+        if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) {
+                log_output(LOG_ERROR, "Error on getting next image index");
+                return -1;
+        }
+
+        return (int32_t)ret;
+}
+
+void vkswapchain_present(vkswapchain_t *swapchain, vkdev_t *dev, VkSemaphore *render_complete, uint32_t *img_index) {
         VkPresentInfoKHR pinfo;
         pinfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         pinfo.pNext = NULL;
         pinfo.waitSemaphoreCount = 1;
-        pinfo.pWaitSemaphores = &swapchain->render_complete;
+        pinfo.pWaitSemaphores = render_complete;
         pinfo.swapchainCount = 1;
         pinfo.pSwapchains = &swapchain->handle;
-        pinfo.pImageIndices = &dev->queues[3].index;
+        pinfo.pImageIndices = img_index;
         pinfo.pResults = NULL;
 
         VkResult res = vkQueuePresentKHR(dev->queues[3].handle, &pinfo);

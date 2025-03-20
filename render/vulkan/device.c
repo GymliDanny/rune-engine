@@ -1,3 +1,24 @@
+/*
+ * Rune Game Engine
+ * Copyright 2024 Danny Holman <dholman@gymli.org>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
 #include "device.h"
 #include "vkassert.h"
 #include <rune/core/alloc.h>
@@ -103,7 +124,7 @@ VkPhysicalDevice _select_pdev(VkInstance instance, VkSurfaceKHR surface) {
         return NULL;
 }
 
-void _create_queue(struct vkdev *dev, int qfam_index, int queue_index) {
+void _create_queue(vkdev_t *dev, int qfam_index, int queue_index) {
         vkGetDeviceQueue(dev->ldev, qfam_index, queue_index, &dev->queues[qfam_index].handle);
         if (dev->queues[qfam_index].handle == NULL) {
                 log_output(LOG_FATAL, "Error creating required Vulkan queue");
@@ -111,20 +132,20 @@ void _create_queue(struct vkdev *dev, int qfam_index, int queue_index) {
         }
 }
 
-struct vkdev* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
+vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
         VkPhysicalDevice pdev = _select_pdev(instance, surface);
         if (pdev == NULL) {
                 log_output(LOG_FATAL, "No device meets minimum requirements for rendering");
                 rune_abort();
         }
 
-        struct vkdev *dev = rune_calloc(0, sizeof(struct vkdev));
+        vkdev_t *dev = rune_calloc(0, sizeof(vkdev_t));
         dev->pdev = pdev;
 
-        dev->queues[0].index = gfx_qfam;
-        dev->queues[1].index = tsfr_qfam;
-        dev->queues[2].index = comp_qfam;
-        dev->queues[3].index = pres_qfam;
+        dev->queues[0].qfam = gfx_qfam;
+        dev->queues[1].qfam = tsfr_qfam;
+        dev->queues[2].qfam = comp_qfam;
+        dev->queues[3].qfam = 0;
 
         float queue_priority = 1.0f;
         VkDeviceQueueCreateInfo qcinfos[3];
@@ -132,7 +153,7 @@ struct vkdev* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
                 qcinfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
                 qcinfos[i].pNext = NULL;
                 qcinfos[i].flags = 0;
-                qcinfos[i].queueFamilyIndex = dev->queues[i].index;
+                qcinfos[i].queueFamilyIndex = dev->queues[i].qfam;
                 qcinfos[i].queueCount = 1;
                 qcinfos[i].pQueuePriorities = &queue_priority;
         }
@@ -157,23 +178,27 @@ struct vkdev* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
         for (uint32_t i = 0; i < 3; i++)
                 _create_queue(dev, i, 0);
 
+        // FIXME: This is a dirty hack and should be fixed
+        dev->queues[3].handle = dev->queues[0].handle;
+
         VkCommandPoolCreateInfo pcinfo;
         pcinfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         pcinfo.pNext = NULL;
         pcinfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        pcinfo.queueFamilyIndex = dev->queues[0].index;
+        pcinfo.queueFamilyIndex = dev->queues[0].qfam;
         vkassert(vkCreateCommandPool(dev->ldev, &pcinfo, NULL, &dev->cmd_pool));
         
         log_output(LOG_DEBUG, "Initialized new logical device");
         return dev;
 }
 
-void destroy_vkdev(struct vkdev *dev) {
+void destroy_vkdev(vkdev_t *dev) {
+        vkDestroyCommandPool(dev->ldev, dev->cmd_pool, NULL);
         vkDestroyDevice(dev->ldev, NULL);
         rune_free(dev);
 }
 
-void get_swapchain_data(struct vkdev *dev, VkSurfaceKHR *surface) {
+void get_swapchain_data(vkdev_t *dev, VkSurfaceKHR *surface) {
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(dev->pdev, *surface, &dev->scdata.capabilities);
 
         vkGetPhysicalDeviceSurfaceFormatsKHR(dev->pdev, *surface, &dev->scdata.format_count, NULL);
@@ -185,7 +210,7 @@ void get_swapchain_data(struct vkdev *dev, VkSurfaceKHR *surface) {
         vkGetPhysicalDeviceSurfacePresentModesKHR(dev->pdev, *surface, &dev->scdata.present_count, dev->scdata.present_modes);
 }
 
-int get_depth_format(struct vkdev *dev) {
+int get_depth_format(vkdev_t *dev) {
         const uint64_t count = 3;
         VkFormat formats[3] = {
                 VK_FORMAT_D32_SFLOAT_S8_UINT,
@@ -207,7 +232,7 @@ int get_depth_format(struct vkdev *dev) {
         return 0;
 }
 
-uint32_t get_memory_index(struct vkdev *dev, uint32_t type, uint32_t flags) {
+uint32_t get_memory_index(vkdev_t *dev, uint32_t type, uint32_t flags) {
         VkPhysicalDeviceMemoryProperties mem_props;
         vkGetPhysicalDeviceMemoryProperties(dev->pdev, &mem_props);
 

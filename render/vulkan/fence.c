@@ -1,10 +1,31 @@
+/*
+ * Rune Game Engine
+ * Copyright 2024 Danny Holman <dholman@gymli.org>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
 #include "fence.h"
 #include "vkassert.h"
 #include <rune/core/logging.h>
 #include <rune/core/alloc.h>
 
-struct vkfence* create_vkfence(struct vkdev *dev, uint8_t signal) {
-        struct vkfence *ret = rune_alloc(sizeof(struct vkfence));
+vkfence_t* create_vkfence(vkdev_t *dev, uint8_t signal) {
+        vkfence_t *ret = rune_alloc(sizeof(vkfence_t));
         
         VkFenceCreateInfo fcinfo;
         fcinfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
@@ -17,7 +38,7 @@ struct vkfence* create_vkfence(struct vkdev *dev, uint8_t signal) {
         return ret;
 }
 
-void destroy_vkfence(struct vkfence *fence, struct vkdev *dev) {
+void destroy_vkfence(vkfence_t *fence, vkdev_t *dev) {
         if (fence->handle != NULL) {
                 vkDestroyFence(dev->ldev, fence->handle, NULL);
                 fence->handle = NULL;
@@ -25,15 +46,15 @@ void destroy_vkfence(struct vkfence *fence, struct vkdev *dev) {
         rune_free(fence);
 }
 
-uint8_t fence_lock(struct vkfence *fence, struct vkdev *dev, uint64_t timeout) {
-        if (fence->signal)
-                return 1;
+int fence_lock(vkfence_t *fence, vkdev_t *dev, uint64_t timeout) {
+        if (fence->signal == 1)
+                return 0;
         
         VkResult res = vkWaitForFences(dev->ldev, 1, &fence->handle, VK_TRUE, timeout);
         switch (res) {
                 case VK_SUCCESS:
                         fence->signal = 1;
-                        return 1;
+                        return 0;
                 case VK_TIMEOUT:
                         log_output(LOG_WARN, "Vulkan fence timed out");
                         break;
@@ -51,13 +72,13 @@ uint8_t fence_lock(struct vkfence *fence, struct vkdev *dev, uint64_t timeout) {
                         break;
         }
 
-        return 0;
+        return -1;
 }
 
-void fence_unlock(struct vkfence *fence, struct vkdev *dev) {
+void fence_unlock(vkfence_t *fence, vkdev_t *dev) {
         if (fence->signal == 0)
                 return;
 
         vkassert(vkResetFences(dev->ldev, 1, &fence->handle));
-        fence->signal = 1;
+        fence->signal = 0;
 }

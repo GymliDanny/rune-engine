@@ -1,9 +1,30 @@
+/*
+ * Rune Game Engine
+ * Copyright 2024 Danny Holman <dholman@gymli.org>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
 #include "image.h"
 #include "device.h"
 #include "vkassert.h"
 #include <rune/core/alloc.h>
 
-int _create_image_view(struct vkimage *image, struct vkdev *dev, VkFormat format, VkImageAspectFlags aflags) {
+int _create_image_view(vkimage_t *image, vkdev_t *dev, VkFormat format, VkImageAspectFlags aflags) {
         VkImageViewCreateInfo vcinfo;
         vcinfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         vcinfo.pNext = NULL;
@@ -23,8 +44,8 @@ int _create_image_view(struct vkimage *image, struct vkdev *dev, VkFormat format
         vkassert(vkCreateImageView(dev->ldev, &vcinfo, NULL, &image->view));
 }
 
-struct vkimage* create_vkimage(struct vkdev *dev, VkFormat format, uint32_t width, uint32_t height, uint32_t usage, uint32_t mem_flags, uint32_t aflags, int create_view) {
-        struct vkimage *ret = rune_alloc(sizeof(struct vkimage));
+vkimage_t* create_vkimage(vkdev_t *dev, VkFormat format, uint32_t width, uint32_t height, uint32_t usage, uint32_t mem_flags, uint32_t aflags, int create_view) {
+        vkimage_t *ret = rune_alloc(sizeof(vkimage_t));
         ret->width = width;
         ret->height = height;
 
@@ -67,7 +88,7 @@ struct vkimage* create_vkimage(struct vkdev *dev, VkFormat format, uint32_t widt
         return ret;
 }
 
-void destroy_vkimage(struct vkimage *image, struct vkdev *dev) {
+void destroy_vkimage(vkimage_t *image, vkdev_t *dev) {
         if (image->view)
                 vkDestroyImageView(dev->ldev, image->view, NULL);
         if (image->memory)

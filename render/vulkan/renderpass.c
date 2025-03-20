@@ -1,9 +1,30 @@
+/*
+ * Rune Game Engine
+ * Copyright 2024 Danny Holman <dholman@gymli.org>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
 #include "renderpass.h"
 #include "vkassert.h"
 #include <rune/core/alloc.h>
 
-struct vkcmdbuffer* create_vkcmdbuffer(struct vkdev *dev, int primary) {
-        struct vkcmdbuffer *ret = rune_calloc(0, sizeof(struct vkcmdbuffer));
+vkcmdbuffer_t* create_vkcmdbuffer(vkdev_t *dev, int primary) {
+        vkcmdbuffer_t *ret = rune_calloc(0, sizeof(vkcmdbuffer_t));
 
         VkCommandBufferAllocateInfo ainfo;
         ainfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -16,11 +37,11 @@ struct vkcmdbuffer* create_vkcmdbuffer(struct vkdev *dev, int primary) {
         ainfo.commandBufferCount = 1;
         vkassert(vkAllocateCommandBuffers(dev->ldev, &ainfo, &ret->handle));
 
-        ret->state = CMDBUF_READY;
+        ret->state = CMDBUF_INITIAL;
         return ret;
 }
 
-void destroy_vkcmdbuffer(struct vkcmdbuffer *cmdbuffer, struct vkdev *dev) {
+void destroy_vkcmdbuffer(vkcmdbuffer_t *cmdbuffer, vkdev_t *dev) {
         vkFreeCommandBuffers(dev->ldev, dev->cmd_pool, 1, &cmdbuffer->handle);
         rune_free(cmdbuffer);
 }
@@ -37,12 +58,12 @@ void cmdbuf_begin(struct vkcmdbuffer *cmdbuffer, int single, int rpass_cont, int
         if (sim_use)
                 binfo.flags |= VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
         vkassert(vkBeginCommandBuffer(cmdbuffer->handle, &binfo));
-        cmdbuffer->state = CMDBUF_RECORD;
+        cmdbuffer->state = CMDBUF_RECORDING;
 }
 
 void cmdbuf_end(struct vkcmdbuffer *cmdbuffer) {
         vkassert(vkEndCommandBuffer(cmdbuffer->handle));
-        cmdbuffer->state = CMDBUF_ENDREC;
+        cmdbuffer->state = CMDBUF_READY;
 }
 
 struct vkcmdbuffer* cmdbuf_begin_single_use(struct vkdev *dev) {
@@ -51,7 +72,7 @@ struct vkcmdbuffer* cmdbuf_begin_single_use(struct vkdev *dev) {
         return ret;
 }
 
-void cmdbuf_end_single_use(struct vkcmdbuffer *cmdbuffer, struct vkdev *dev, VkQueue queue) {
+void cmdbuf_end_single_use(vkcmdbuffer_t *cmdbuffer, vkdev_t *dev, VkQueue queue) {
         cmdbuf_end(cmdbuffer);
         VkSubmitInfo sinfo;
         sinfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -69,7 +90,7 @@ void cmdbuf_end_single_use(struct vkcmdbuffer *cmdbuffer, struct vkdev *dev, VkQ
         destroy_vkcmdbuffer(cmdbuffer, dev);
 }
 
-struct vkrendpass* create_vkrendpass(struct vkdev *dev, struct vkswapchain *swapchain, vec4 area, vec4 color, float depth, uint32_t stencil) {
+vkrendpass_t* create_vkrendpass(vkdev_t *dev, vkswapchain_t *swapchain, vec4 area, vec4 color, float depth, uint32_t stencil) {
         VkAttachmentDescription atdesc[2];
         atdesc[0].flags = 0;
         atdesc[0].format = swapchain->format_khr.format;
@@ -119,7 +140,7 @@ struct vkrendpass* create_vkrendpass(struct vkdev *dev, struct vkswapchain *swap
         dep.dstAccessMask = 0;
         dep.dependencyFlags = 0;
 
-        struct vkrendpass *ret = rune_alloc(sizeof(struct vkrendpass));
+        vkrendpass_t *ret = rune_alloc(sizeof(vkrendpass_t));
         ret->color[0] = color[0];
         ret->color[1] = color[1];
         ret->color[2] = color[2];
@@ -146,7 +167,7 @@ struct vkrendpass* create_vkrendpass(struct vkdev *dev, struct vkswapchain *swap
         return ret;
 }
 
-void destroy_vkrendpass(struct vkrendpass *rendpass, struct vkdev *dev) {
+void destroy_vkrendpass(vkrendpass_t *rendpass, vkdev_t *dev) {
         if (rendpass->handle)
                 vkDestroyRenderPass(dev->ldev, rendpass->handle, NULL);
         rune_free(rendpass);
@@ -174,10 +195,10 @@ void renderpass_begin(struct vkcmdbuffer *buf, struct vkrendpass *rendpass, VkFr
         binfo.pClearValues = cvals;
 
         vkCmdBeginRenderPass(buf->handle, &binfo, VK_SUBPASS_CONTENTS_INLINE);
-        buf->state = CMDBUF_RPASS;
+        buf->state = CMDBUF_IN_RENDERPASS;
 }
 
 void renderpass_end(struct vkcmdbuffer *buf, struct vkrendpass *rendpass) {
         vkCmdEndRenderPass(buf->handle);
-        buf->state = CMDBUF_RECORD;
+        buf->state = CMDBUF_RECORDING;
 }
