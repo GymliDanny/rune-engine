@@ -53,13 +53,13 @@ typedef void (*mod_func)(void);
 /**
  * Class-like definition for in-game mod
  */
-struct mod {
+typedef struct mod {
         const char *name;       ///< Name of the mod
         mod_func init_func;     ///< Mod initialization function, called by rune_init_mods
         mod_func exit_func;     ///< Mod exit function, called by rune_close_mods
         mod_func update_func;   ///< Mod update function, called at every frame
         struct list_head list;  ///< Linked list of all mod structs, used internally
-};
+} mod_t;
 
 /**
  * \brief Load all the mods from the mod folder, mods must be either DLLs on Windows,

@@ -1,3 +1,24 @@
+/*
+ * Rune Game Engine
+ * Copyright 2024 Danny Holman <dholman@gymli.org>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
 #include <rune/core/thread.h>
 #include <rune/core/logging.h>
 #include <rune/core/alloc.h>
@@ -5,8 +26,8 @@
 #include <string.h>
 #include <stdatomic.h>
 
-static struct list_head *threads = NULL;
-static struct list_head *mutexes = NULL;
+static list_head_t *threads = NULL;
+static list_head_t *mutexes = NULL;
 static int next_tid = 0;
 static int next_mid = 0;
 
@@ -20,7 +41,7 @@ static struct thread* _find_thread_by_handle(void *handle) {
         if (threads == NULL)
                 return NULL;
 
-        struct list_head *temp = threads;
+        list_head_t *temp = threads;
         struct thread *ret;
         while (temp != NULL) {
                 ret = (struct thread*)((void*)temp - offsetof(struct thread, list));
@@ -35,7 +56,7 @@ static struct thread* _find_thread_by_id(int ID) {
         if (threads == NULL)
                 return NULL;
 
-        struct list_head *temp = threads;
+        list_head_t *temp = threads;
         struct thread *ret;
         while (temp != NULL) {
                 ret = (struct thread*)((void*)temp - offsetof(struct thread, list));
@@ -50,7 +71,7 @@ static struct mutex* _find_mutex_by_id(int ID) {
         if (mutexes == NULL)
                 return NULL;
 
-        struct list_head *temp = mutexes;
+        list_head_t *temp = mutexes;
         struct mutex *ret;
         while (temp != NULL) {
                 ret = (struct mutex*)((void*)temp - offsetof(struct mutex, list));

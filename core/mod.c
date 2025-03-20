@@ -1,3 +1,24 @@
+/*
+ * Rune Game Engine
+ * Copyright 2024 Danny Holman <dholman@gymli.org>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
 #include <rune/core/mod.h>
 #include <rune/core/logging.h>
 #include <rune/core/alloc.h>
@@ -6,7 +27,7 @@
 #include <dirent.h>
 #include <dlfcn.h>
 
-struct list_head *mods = NULL;
+list_head_t *mods = NULL;
 
 void _load_mod(const char *filename) {
         char mod_path[4096];
@@ -31,7 +52,7 @@ void rune_load_mods(void) {
 }
 
 void rune_init_mods(void) {
-        struct list_head *temp = mods;
+        list_head_t *temp = mods;
         struct mod *mod;
         while (temp != NULL) {
                 mod = (struct mod*)((void*)temp - offsetof(struct mod, list));
@@ -44,7 +65,7 @@ void rune_close_mods(void) {
         if (mods == NULL)
                 return;
 
-        struct list_head *temp = mods;
+        list_head_t *temp = mods;
         struct mod *mod;
         while (temp != NULL) {
                 mod = (struct mod*)((void*)temp - offsetof(struct mod, list));

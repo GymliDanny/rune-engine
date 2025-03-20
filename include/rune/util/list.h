@@ -27,18 +27,18 @@
 /**
  * Linux-kernel combatible linked list implementation
  */
-struct list_head {
+typedef struct list_head {
         struct list_head *next; ///< Next list element
         struct list_head *prev; ///< Previous list element
-};
+} list_head_t;
 
 /**
  * \brief Add element to the end of a list
- * \param[in] new Pointer to struct list_head, part of another struct
+ * \param[in] new Pointer to list_head_t, part of another struct
  * \param[in] head Start point of the list to be added to
  */
-static inline void list_add(struct list_head *new, struct list_head *head) {
-        struct list_head *temp = head;
+static inline void list_add(list_head_t *new, list_head_t *head) {
+        list_head_t *temp = head;
         while (temp->next != NULL)
                 temp = temp->next;
 
@@ -49,11 +49,11 @@ static inline void list_add(struct list_head *new, struct list_head *head) {
 
 /**
  * \brief Remove element from a list
- * \param[in] item Pointer to struct list_head, part of another struct
+ * \param[in] item Pointer to list_head_t, part of another struct
  */
-static inline void list_del(struct list_head *item) {
-        struct list_head *next = item->next;
-        struct list_head *prev = item->prev;
+static inline void list_del(list_head_t *item) {
+        list_head_t *next = item->next;
+        list_head_t *prev = item->prev;
         if (next != NULL)
                 next->prev = prev;
         if (prev != NULL)

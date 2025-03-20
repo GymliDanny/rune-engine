@@ -28,21 +28,21 @@
 /**
  * Platform-agnostic thread handle
  */
-struct thread {
+typedef struct thread {
         int ID;                 ///< In-engine thread ID
         int detached;           ///< 1 if thread has been detached, 0 otherwise
         void *thread_handle;    ///< System-defined thread handle, usually a pthread_t
         struct list_head list;  ///< Linked list of all threads, used internally
-};
+} thread_t;
 
 /**
  * Platform-agnostic mutex handle
  */
-struct mutex {
+typedef struct mutex {
         int ID;                 ///< In-engine mutex ID
         void *mutex_handle;     ///< System-defined mutex handle, usually a pthread_mutex_t
         struct list_head list;  ///< Linked list of all mutexes, used internally
-};
+} mutex_t;
 
 /**
  * \brief Initializes the engine's thread API, must be called before using any

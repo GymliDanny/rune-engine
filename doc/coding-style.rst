@@ -135,20 +135,15 @@ should have a name that reflects their purpose and scope. For instance:
 Typedefs
 --------
 
-Typedefs should be avoided at the global or API level, as it can hide
-information about a struct or pointer. Things such as ``type_t`` are prone to
-create confusion and are heavily frowned upon. The rationale is that when a
-programmer sees ``type_t var``, they have no context as to how the type needs
-to be used. Instead, leave the backing type information in full view:
-
-.. code-block:: c
-
-   struct type *var;
+Typedefs should generally be avoided at the local level, however, at the global
+or API level, a bare structure could become a bit too wordy for general use.
+Instead, use a typedef to avoid hitting the 80-column limit unless  it is
+readable as it is.
 
 The engine has already defined the standard C23 integer types for use in
-engine code, so there is no need to do any kind of typedef. Even if the backing
-type information is platform-dependant, a simple ``void*`` is almost always
-preferable to creating a new type wholesale.
+engine code, so there is no need to do any kind of typedef for standard types.
+Even if the backing type information is platform-dependant, a simple ``void*``
+is almost always preferable to creating a new type wholesale.
 
 Functions
 ---------
