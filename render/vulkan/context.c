@@ -173,7 +173,13 @@ void destroy_vkcontext(vkcontext_t *context) {
 }
 
 vklayer_container_t* init_vklayers(ext_container_t *ext) {
-        const char** new_extensions = rune_alloc(sizeof(char*) * ext->ext_count++);
+        ext->ext_count++;
+        const char** new_extensions = rune_alloc(sizeof(char*) * ext->ext_count);
+        if (new_extensions == NULL) {
+                log_output(LOG_FATAL, "Cannot allocate memory for debug extensions");
+                rune_abort();
+        }
+
         for (uint32_t i = 0; i < ext->ext_count-1; i++)
                 new_extensions[i] = ext->extensions[i];
         new_extensions[ext->ext_count-1] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
