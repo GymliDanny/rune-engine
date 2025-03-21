@@ -89,6 +89,27 @@ int _init_vkdebugger(vkcontext_t *context) {
         return 0;
 }
 
+uint32_t _vertoi(const char *version) {
+        uint32_t major = 0;
+        uint32_t minor = 0;
+        uint32_t patch = 0;
+        char *version_copy = strdup(version);
+        char *token = strtok(version_copy, ".");
+        if (token != NULL)
+                major = (uint32_t)atoi(token);
+
+        token = strtok(NULL, ".");
+        if (token != NULL)
+                minor = (uint32_t)atoi(token);
+
+        token = strtok(NULL, ".");
+        if (token != NULL)
+                patch = (uint32_t)atoi(token);
+
+        free(version_copy);
+        return (major << 22) | (minor << 12) | patch;
+}
+
 vkcontext_t* create_vkcontext(vklayer_container_t *vklayers, ext_container_t *ext) {
         vkcontext_t *ret = rune_calloc(0, sizeof(vkcontext_t));
         ret->surface = rune_alloc(sizeof(vksurface_t));
@@ -98,14 +119,10 @@ vkcontext_t* create_vkcontext(vklayer_container_t *vklayers, ext_container_t *ex
         app_info.pNext = NULL;
         app_info.apiVersion = VK_API_VERSION_1_2;
         app_info.pApplicationName = rune_get_app_name();
-        int *app_ver = rune_get_app_ver();
-        app_info.applicationVersion = VK_MAKE_VERSION(app_ver[0],
-                                                      app_ver[1],
-                                                      app_ver[2]);
+        const char *app_ver = rune_get_app_ver();
+        app_info.applicationVersion = _vertoi(app_ver);
         app_info.pEngineName = "RuneEngine";
-        app_info.engineVersion = VK_MAKE_VERSION(RUNE_VER_MAJOR,
-                                                 RUNE_VER_MINOR,
-                                                 RUNE_VER_PATCH);
+        app_info.engineVersion = _vertoi(RUNE_VER);
 
         VkInstanceCreateInfo cinfo;
         cinfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
