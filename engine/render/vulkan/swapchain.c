@@ -47,6 +47,8 @@ vkswapchain_t* create_swapchain(vksurface_t *surface, vkdev_t *dev) {
 
         VkSwapchainCreateInfoKHR cinfo;
         cinfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        cinfo.pNext = NULL;
+        cinfo.flags = 0;
         cinfo.surface = surface->handle;
         cinfo.minImageCount = img_count;
         cinfo.imageFormat = swapchain->format_khr.format;
@@ -59,8 +61,8 @@ vkswapchain_t* create_swapchain(vksurface_t *surface, vkdev_t *dev) {
         cinfo.presentMode = VK_PRESENT_MODE_MAILBOX_KHR;
         cinfo.clipped = VK_TRUE;
         cinfo.oldSwapchain = NULL;
-        if (dev->queues[0].qfam != dev->queues[3].qfam) {
-                uint32_t qfams[] = {dev->queues[0].qfam, dev->queues[3].qfam};
+        if (dev->gfx_qfam != dev->pres_qfam) {
+                uint32_t qfams[] = {dev->gfx_qfam, dev->pres_qfam};
                 cinfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
                 cinfo.queueFamilyIndexCount = 2;
                 cinfo.pQueueFamilyIndices = qfams;
@@ -140,7 +142,7 @@ void vkswapchain_present(vkswapchain_t *swapchain, vkdev_t *dev, VkSemaphore *re
         pinfo.pImageIndices = img_index;
         pinfo.pResults = NULL;
 
-        VkResult res = vkQueuePresentKHR(dev->queues[3].handle, &pinfo);
+        VkResult res = vkQueuePresentKHR(dev->pres_queue, &pinfo);
         if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
                 STUBBED("Recreate swapchain");
         else if (res != VK_SUCCESS)

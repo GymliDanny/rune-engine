@@ -19,16 +19,30 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#ifndef VKDEVICE_H
-#define VKDEVICE_H
+#include <rune/core/init.h>
+#include <rune/core/abort.h>
+#include <rune/core/alloc.h>
+#include <rune/core/config.h>
+#include <rune/core/logging.h>
+#include <rune/core/thread.h>
+#include <rune/core/mod.h>
+#include <rune/core/object.h>
 
-#include "vk_types.h"
+int rune_init(int argc, char* argv[]) {
+        log_output(LOG_INFO, "Started Rune Engine version %s", RUNE_VER);
 
-vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface);
-void destroy_vkdev(vkdev_t *dev);
+        rune_init_default_settings();
+        rune_init_thread_api();
 
-void get_swapchain_data(vkdev_t *dev, VkSurfaceKHR *surface);
-int get_depth_format(vkdev_t *dev);
-uint32_t get_memory_index(vkdev_t *dev, uint32_t type, uint32_t flags);
+        rune_load_mods();
+        rune_init_mods();
 
-#endif
+        return 0;
+}
+
+void rune_exit(void) {
+        log_output(LOG_INFO, "Engine shutdown requested");
+        rune_clear_objs();
+        rune_close_mods();
+        rune_free_all();
+}

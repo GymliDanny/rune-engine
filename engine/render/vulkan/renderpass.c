@@ -29,7 +29,7 @@ vkcmdbuffer_t* create_vkcmdbuffer(vkdev_t *dev, int primary) {
         VkCommandBufferAllocateInfo ainfo;
         ainfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         ainfo.pNext = NULL;
-        ainfo.commandPool = dev->cmd_pool;
+        ainfo.commandPool = dev->gfx_cmd_pool;
         if (primary == 1)
                 ainfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         else
@@ -42,7 +42,7 @@ vkcmdbuffer_t* create_vkcmdbuffer(vkdev_t *dev, int primary) {
 }
 
 void destroy_vkcmdbuffer(vkcmdbuffer_t *cmdbuffer, vkdev_t *dev) {
-        vkFreeCommandBuffers(dev->ldev, dev->cmd_pool, 1, &cmdbuffer->handle);
+        vkFreeCommandBuffers(dev->ldev, dev->gfx_cmd_pool, 1, &cmdbuffer->handle);
         rune_free(cmdbuffer);
 }
 

@@ -78,7 +78,7 @@ int _query_comp_index(int num_props, VkQueueFamilyProperties *qfam_props) {
 int _query_pres_index(int num_props, VkQueueFamilyProperties *qfam_props, VkPhysicalDevice pdev, VkSurfaceKHR surface) {
         VkBool32 present_bit;
         for (int i = 0; i < num_props; i++) {
-                vkGetPhysicalDeviceSurfaceSupportKHR(pdev, 0, surface, &present_bit);
+                vkGetPhysicalDeviceSurfaceSupportKHR(pdev, i, surface, &present_bit);
                 if (present_bit != VK_FALSE)
                         pres_qfam = i;
         }
@@ -124,15 +124,47 @@ VkPhysicalDevice _select_pdev(VkInstance instance, VkSurfaceKHR surface) {
         return NULL;
 }
 
-void _create_queue(vkdev_t *dev, int qfam_index, int queue_index) {
-        vkGetDeviceQueue(dev->ldev, qfam_index, queue_index, &dev->queues[qfam_index].handle);
-        if (dev->queues[qfam_index].handle == NULL) {
+void _create_queue(vkdev_t *dev, int qfam_type, int qfam_index, int queue_index) {
+        VkQueue *queue_arr;
+        int num_queues;
+        switch (qfam_type) {
+                case QFAM_TYPE_GRAPHICS:
+                        dev->num_gfx_queues++;
+                        num_queues = dev->num_gfx_queues;
+                        dev->gfx_queues = rune_realloc(dev->gfx_queues, sizeof(VkQueue)*num_queues);
+                        queue_arr = dev->gfx_queues;
+                        break;
+                case QFAM_TYPE_TRANSFER:
+                        dev->num_tsfr_queues++;
+                        num_queues = dev->num_tsfr_queues;
+                        dev->gfx_queues = rune_realloc(dev->tsfr_queues, sizeof(VkQueue)*num_queues);
+                        queue_arr = dev->tsfr_queues;
+                        break;
+                case QFAM_TYPE_COMPUTE:
+                        dev->num_comp_queues++;
+                        num_queues = dev->num_comp_queues;
+                        dev->gfx_queues = rune_realloc(dev->comp_queues, sizeof(VkQueue)*num_queues);
+                        queue_arr = dev->comp_queues;
+                        break;
+                case QFAM_TYPE_PRESENT:
+                        if (dev->pres_queue != NULL)
+                                rune_free(dev->pres_queue);
+                        dev->pres_queue = rune_alloc(sizeof(VkQueue));
+                        queue_arr = dev->pres_queue;
+                        break;
+                default:
+                        log_output(LOG_FATAL, "Requested unknown queue type");
+                        rune_abort();
+        }
+
+        vkGetDeviceQueue(dev->ldev, qfam_index, queue_index, &queue_arr[num_queues-1]);
+        if (queue_arr[num_queues-1] == NULL) {
                 log_output(LOG_FATAL, "Error creating required Vulkan queue");
                 rune_abort();
         }
 }
 
-vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
+vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface, int num_gfx, int num_tsfr, int num_comp, int presentable) {
         VkPhysicalDevice pdev = _select_pdev(instance, surface);
         if (pdev == NULL) {
                 log_output(LOG_FATAL, "No device meets minimum requirements for rendering");
@@ -141,22 +173,58 @@ vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
 
         vkdev_t *dev = rune_calloc(0, sizeof(vkdev_t));
         dev->pdev = pdev;
+        dev->gfx_qfam = gfx_qfam;
+        dev->tsfr_qfam = tsfr_qfam;
+        dev->comp_qfam = comp_qfam;
+        dev->pres_qfam = pres_qfam;
 
-        dev->queues[0].qfam = gfx_qfam;
-        dev->queues[1].qfam = tsfr_qfam;
-        dev->queues[2].qfam = comp_qfam;
-        dev->queues[3].qfam = 0;
+        if (num_gfx > 0 && gfx_qfam == -1) {
+                log_output(LOG_FATAL, "Requested graphics queues but none found on device");
+                rune_abort();
+        }
+        if (num_tsfr > 0 && tsfr_qfam == -1) {
+                log_output(LOG_FATAL, "Requested transfer queues but none found on device");
+                rune_abort();
+        }
+        if (num_comp > 0 && comp_qfam == -1) {
+                log_output(LOG_FATAL, "Requested compute queues but none found on device");
+                rune_abort();
+        }
+        if (presentable == 1 && pres_qfam == -1) {
+                log_output(LOG_FATAL, "Requested presentation queue but none found on device");
+                rune_abort();
+        }
 
-        float queue_priority = 1.0f;
-        VkDeviceQueueCreateInfo qcinfos[3];
-        for (int i = 0; i < 3; i++) {
+        int num_total = num_gfx + num_tsfr + num_comp + presentable;
+        int index = 0;
+        static const float queue_priority = 1.0f;
+        VkDeviceQueueCreateInfo *qcinfos = rune_alloc(sizeof(VkDeviceQueueCreateInfo)*num_total);
+        for (int i = 0; i < index+num_gfx; i++) {
                 qcinfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
                 qcinfos[i].pNext = NULL;
                 qcinfos[i].flags = 0;
-                qcinfos[i].queueFamilyIndex = dev->queues[i].qfam;
+                qcinfos[i].queueFamilyIndex = gfx_qfam;
                 qcinfos[i].queueCount = 1;
                 qcinfos[i].pQueuePriorities = &queue_priority;
         }
+        //index += num_gfx;
+        //for (int i = index; i < index+num_tsfr; i++) {
+        //        qcinfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        //        qcinfos[i].pNext = NULL;
+        //        qcinfos[i].flags = 0;
+        //        qcinfos[i].queueFamilyIndex = tsfr_qfam;
+        //        qcinfos[i].queueCount = 1;
+        //        qcinfos[i].pQueuePriorities = &queue_priority;
+        //}
+        //index += num_tsfr;
+        //for (int i = index; i < index+num_comp; i++) {
+        //        qcinfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        //        qcinfos[i].pNext = NULL;
+        //        qcinfos[i].flags = 0;
+        //        qcinfos[i].queueFamilyIndex = comp_qfam;
+        //        qcinfos[i].queueCount = 1;
+        //        qcinfos[i].pQueuePriorities = &queue_priority;
+        //}
 
         struct vkdev_data pdata;
         _query_pdev_data(pdev, &pdata);
@@ -165,7 +233,7 @@ vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
         dcinfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         dcinfo.pNext = NULL;
         dcinfo.flags = 0;
-        dcinfo.queueCreateInfoCount = 3;
+        dcinfo.queueCreateInfoCount = num_total;
         dcinfo.pQueueCreateInfos = qcinfos;
         dcinfo.enabledLayerCount = 0;
         dcinfo.ppEnabledLayerNames = NULL;
@@ -174,26 +242,34 @@ vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface) {
         dcinfo.ppEnabledExtensionNames = &ext_names;
         dcinfo.pEnabledFeatures = &pdata.pdev_feats;
         vkassert(vkCreateDevice(dev->pdev, &dcinfo, NULL, &dev->ldev));
+        rune_free(qcinfos);
 
-        for (uint32_t i = 0; i < 3; i++)
-                _create_queue(dev, i, 0);
-
-        // FIXME: This is a dirty hack and should be fixed
-        dev->queues[3].handle = dev->queues[0].handle;
+        for (int i = 0; i < num_gfx; i++)
+                _create_queue(dev, QFAM_TYPE_GRAPHICS, gfx_qfam, i);
+        for (int i = 0; i < num_tsfr; i++)
+                _create_queue(dev, QFAM_TYPE_TRANSFER, tsfr_qfam, i);
+        for (int i = 0; i < num_comp; i++)
+                _create_queue(dev, QFAM_TYPE_COMPUTE, comp_qfam, i);
 
         VkCommandPoolCreateInfo pcinfo;
         pcinfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         pcinfo.pNext = NULL;
         pcinfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        pcinfo.queueFamilyIndex = dev->queues[0].qfam;
-        vkassert(vkCreateCommandPool(dev->ldev, &pcinfo, NULL, &dev->cmd_pool));
+        pcinfo.queueFamilyIndex = gfx_qfam;
+        vkassert(vkCreateCommandPool(dev->ldev, &pcinfo, NULL, &dev->gfx_cmd_pool));
+        pcinfo.queueFamilyIndex = tsfr_qfam;
+        vkassert(vkCreateCommandPool(dev->ldev, &pcinfo, NULL, &dev->tsfr_cmd_pool));
+        pcinfo.queueFamilyIndex = comp_qfam;
+        vkassert(vkCreateCommandPool(dev->ldev, &pcinfo, NULL, &dev->comp_cmd_pool));
         
         log_output(LOG_DEBUG, "Initialized new logical device");
         return dev;
 }
 
 void destroy_vkdev(vkdev_t *dev) {
-        vkDestroyCommandPool(dev->ldev, dev->cmd_pool, NULL);
+        vkDestroyCommandPool(dev->ldev, dev->gfx_cmd_pool, NULL);
+        vkDestroyCommandPool(dev->ldev, dev->tsfr_cmd_pool, NULL);
+        vkDestroyCommandPool(dev->ldev, dev->comp_cmd_pool, NULL);
         vkDestroyDevice(dev->ldev, NULL);
         rune_free(dev);
 }

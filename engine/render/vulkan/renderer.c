@@ -123,7 +123,11 @@ int _init_vulkan(window_t *window) {
         }
 
         context->dev = create_vkdev(context->instance,
-                                         context->surface->handle);
+                                    context->surface->handle,
+                                    1,
+                                    1,
+                                    1,
+                                    1);
         if (context->dev == NULL)
                 return -1;
 
@@ -238,11 +242,13 @@ int _end_frame(float time) {
         *img_in_flight = context->fences_in_flight[context->swapchain->frame];
         fence_unlock(*img_in_flight, context->dev);
 
-        cmdbuf_submit(cmdbuf,
-                      &context->queue_semaphores[context->swapchain->frame],
-                      &context->image_semaphores[context->swapchain->frame],
-                      context->dev->queues[0].handle,
-                      (*img_in_flight)->handle);
+        for (int i = 0; i < context->dev->num_gfx_queues; i++) {
+                cmdbuf_submit(cmdbuf,
+                              &context->queue_semaphores[context->swapchain->frame],
+                              &context->image_semaphores[context->swapchain->frame],
+                              context->dev->gfx_queues[i],
+                              (*img_in_flight)->handle);
+        }
 
         vkswapchain_present(context->swapchain,
                             context->dev,

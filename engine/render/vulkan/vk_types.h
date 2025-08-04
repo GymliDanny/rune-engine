@@ -27,10 +27,10 @@
 #include <GLFW/glfw3.h>
 #include <cglm/cglm.h>
 
-typedef struct vkqueue {
-        uint32_t qfam;
-        VkQueue handle;
-} vkqueue_t;
+#define QFAM_TYPE_GRAPHICS      1
+#define QFAM_TYPE_TRANSFER      2
+#define QFAM_TYPE_COMPUTE       3
+#define QFAM_TYPE_PRESENT       4
 
 typedef struct vksurface {
         VkSurfaceKHR handle;
@@ -93,8 +93,21 @@ typedef struct vkdev {
         VkPhysicalDevice pdev;
         VkDevice ldev;
         vkswapchain_data_t scdata;
-        vkqueue_t queues[4];
-        VkCommandPool cmd_pool;
+        VkQueue *gfx_queues;
+        int num_gfx_queues;
+        int gfx_qfam;
+        VkQueue *tsfr_queues;
+        int num_tsfr_queues;
+        int tsfr_qfam;
+        VkQueue *comp_queues;
+        int num_comp_queues;
+        int comp_qfam;
+        VkQueue *pres_queue;
+        int pres_qfam;
+        VkCommandPool gfx_cmd_pool;
+        VkCommandPool tsfr_cmd_pool;
+        VkCommandPool comp_cmd_pool;
+        VkCommandPool pres_cmd_pool;
         VkFormat depth_format;
 } vkdev_t;
 
