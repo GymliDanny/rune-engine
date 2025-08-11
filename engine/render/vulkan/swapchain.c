@@ -142,7 +142,7 @@ void vkswapchain_present(vkswapchain_t *swapchain, vkdev_t *dev, VkSemaphore *re
         pinfo.pImageIndices = img_index;
         pinfo.pResults = NULL;
 
-        VkResult res = vkQueuePresentKHR(dev->pres_queue, &pinfo);
+        VkResult res = vkQueuePresentKHR(*dev->pres_queue, &pinfo);
         if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR)
                 STUBBED("Recreate swapchain");
         else if (res != VK_SUCCESS)

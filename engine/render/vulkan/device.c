@@ -137,13 +137,13 @@ void _create_queue(vkdev_t *dev, int qfam_type, int qfam_index, int queue_index)
                 case QFAM_TYPE_TRANSFER:
                         dev->num_tsfr_queues++;
                         num_queues = dev->num_tsfr_queues;
-                        dev->gfx_queues = rune_realloc(dev->tsfr_queues, sizeof(VkQueue)*num_queues);
+                        dev->tsfr_queues = rune_realloc(dev->tsfr_queues, sizeof(VkQueue)*num_queues);
                         queue_arr = dev->tsfr_queues;
                         break;
                 case QFAM_TYPE_COMPUTE:
                         dev->num_comp_queues++;
                         num_queues = dev->num_comp_queues;
-                        dev->gfx_queues = rune_realloc(dev->comp_queues, sizeof(VkQueue)*num_queues);
+                        dev->comp_queues = rune_realloc(dev->comp_queues, sizeof(VkQueue)*num_queues);
                         queue_arr = dev->comp_queues;
                         break;
                 case QFAM_TYPE_PRESENT:
@@ -195,36 +195,28 @@ vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface, int num_gfx, in
                 rune_abort();
         }
 
-        int num_total = num_gfx + num_tsfr + num_comp + presentable;
-        int index = 0;
+        int num_total = num_gfx + num_tsfr + num_comp;
         static const float queue_priority = 1.0f;
-        VkDeviceQueueCreateInfo *qcinfos = rune_alloc(sizeof(VkDeviceQueueCreateInfo)*num_total);
-        for (int i = 0; i < index+num_gfx; i++) {
+        VkDeviceQueueCreateInfo *qcinfos = rune_calloc(0, sizeof(VkDeviceQueueCreateInfo)*3);
+        for (int i = 0; i < 3; i++) {
                 qcinfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
                 qcinfos[i].pNext = NULL;
                 qcinfos[i].flags = 0;
-                qcinfos[i].queueFamilyIndex = gfx_qfam;
-                qcinfos[i].queueCount = 1;
                 qcinfos[i].pQueuePriorities = &queue_priority;
         }
-        //index += num_gfx;
-        //for (int i = index; i < index+num_tsfr; i++) {
-        //        qcinfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        //        qcinfos[i].pNext = NULL;
-        //        qcinfos[i].flags = 0;
-        //        qcinfos[i].queueFamilyIndex = tsfr_qfam;
-        //        qcinfos[i].queueCount = 1;
-        //        qcinfos[i].pQueuePriorities = &queue_priority;
-        //}
-        //index += num_tsfr;
-        //for (int i = index; i < index+num_comp; i++) {
-        //        qcinfos[i].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        //        qcinfos[i].pNext = NULL;
-        //        qcinfos[i].flags = 0;
-        //        qcinfos[i].queueFamilyIndex = comp_qfam;
-        //        qcinfos[i].queueCount = 1;
-        //        qcinfos[i].pQueuePriorities = &queue_priority;
-        //}
+        qcinfos[0].queueFamilyIndex = gfx_qfam;
+        qcinfos[0].queueCount = num_gfx;
+        qcinfos[1].queueFamilyIndex = tsfr_qfam;
+        qcinfos[1].queueCount = num_tsfr;
+        qcinfos[2].queueFamilyIndex = comp_qfam;
+        qcinfos[2].queueCount = num_comp;
+
+        if (pres_qfam == gfx_qfam)
+                qcinfos[0].queueCount++;
+        else if (pres_qfam == tsfr_qfam)
+                qcinfos[1].queueCount++;
+        else if (pres_qfam == comp_qfam)
+                qcinfos[2].queueCount++;
 
         struct vkdev_data pdata;
         _query_pdev_data(pdev, &pdata);
@@ -233,7 +225,7 @@ vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface, int num_gfx, in
         dcinfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         dcinfo.pNext = NULL;
         dcinfo.flags = 0;
-        dcinfo.queueCreateInfoCount = num_total;
+        dcinfo.queueCreateInfoCount = 3;
         dcinfo.pQueueCreateInfos = qcinfos;
         dcinfo.enabledLayerCount = 0;
         dcinfo.ppEnabledLayerNames = NULL;
@@ -250,6 +242,10 @@ vkdev_t* create_vkdev(VkInstance instance, VkSurfaceKHR surface, int num_gfx, in
                 _create_queue(dev, QFAM_TYPE_TRANSFER, tsfr_qfam, i);
         for (int i = 0; i < num_comp; i++)
                 _create_queue(dev, QFAM_TYPE_COMPUTE, comp_qfam, i);
+        if (pres_qfam == gfx_qfam)
+                dev->pres_queue = &dev->gfx_queues[0];
+        else if (pres_qfam == tsfr_qfam)
+                dev->pres_queue = &dev->tsfr_queues[0];
 
         VkCommandPoolCreateInfo pcinfo;
         pcinfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
